@@ -170,6 +170,7 @@ struct McpsDataRequestParams
 struct McpsDataConfirmParams
 {
   uint8_t m_msduHandle; //!< MSDU handle
+  uint8_t m_retries; //!< number of retries before getting ACK_SUCCESS
   LrWpanMcpsDataConfirmStatus m_status; //!< The status of the last MSDU transmission
 };
 
