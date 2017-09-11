@@ -647,7 +647,7 @@ LrWpanMac::PdDataIndication (uint32_t psduLength, Ptr<Packet> p, uint8_t lqi)
                           TxQueueElement *txQElement = m_txQueue.front ();
                           McpsDataConfirmParams confirmParams;
                           confirmParams.m_msduHandle = txQElement->txQMsduHandle;
-                          confirmParams.m_retries = m_numCsmacaRetry;
+                          confirmParams.m_retries = m_retransmission;
                           confirmParams.m_status = IEEE_802_15_4_SUCCESS;
                           m_mcpsDataConfirmCallback (confirmParams);
                         }
@@ -817,7 +817,7 @@ LrWpanMac::PdDataConfirm (LrWpanPhyEnumeration status)
                   NS_ASSERT_MSG (m_txQueue.size () > 0, "TxQsize = 0");
                   TxQueueElement *txQElement = m_txQueue.front ();
                   confirmParams.m_msduHandle = txQElement->txQMsduHandle;
-				  confirmParams.m_retries = m_numCsmacaRetry;
+				  confirmParams.m_retries = m_retransmission;
                   confirmParams.m_status = IEEE_802_15_4_SUCCESS;
                   m_mcpsDataConfirmCallback (confirmParams);
                 }
