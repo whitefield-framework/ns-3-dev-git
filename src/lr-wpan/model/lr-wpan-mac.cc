@@ -625,6 +625,11 @@ LrWpanMac::PdDataIndication (uint32_t psduLength, Ptr<Packet> p, uint8_t lqi)
                   ChangeMacState (MAC_IDLE);
                   m_setMacState = Simulator::ScheduleNow (&LrWpanMac::SendAck, this, receivedMacHdr.GetSeqNum ());
                 }
+			  //Added for pcaping RX data pkt
+              if (receivedMacHdr.IsData ())
+                {
+				  m_snifferTrace (originalPkt);
+				}
 
               if (receivedMacHdr.IsData () && !m_mcpsDataIndicationCallback.IsNull ())
                 {
@@ -635,6 +640,9 @@ LrWpanMac::PdDataIndication (uint32_t psduLength, Ptr<Packet> p, uint8_t lqi)
               else if (receivedMacHdr.IsAcknowledgment () && m_txPkt && m_lrWpanMacState == MAC_ACK_PENDING)
                 {
                   LrWpanMacHeader macHdr;
+
+			      //Added for pcaping RX ACK pkt
+				  m_snifferTrace (originalPkt);
                   m_txPkt->PeekHeader (macHdr);
                   if (receivedMacHdr.GetSeqNum () == macHdr.GetSeqNum ())
                     {
