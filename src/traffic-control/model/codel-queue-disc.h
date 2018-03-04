@@ -79,6 +79,7 @@ public:
 
   /**
    * \brief Enumeration of the modes supported in the class.
+   * \deprecated This enum will go away in future versions of ns-3.
    *
    */
   enum QueueDiscMode
@@ -91,6 +92,8 @@ public:
    * \brief Set the operating mode of this queue disc.
    *
    * \param mode The operating mode of this queue disc.
+   * \deprecated This method will go away in future versions of ns-3.
+   * See instead SetMaxSize()
    */
   void SetMode (QueueDiscMode mode);
 
@@ -98,8 +101,10 @@ public:
    * \brief Get the operating mode of this queue disc.
    *
    * \returns The operating mode of this queue disc.
+   * \deprecated This method will go away in future versions of ns-3.
+   * See instead GetMaxSize()
    */
-  QueueDiscMode GetMode (void);
+  QueueDiscMode GetMode (void) const;
 
   /**
    * \brief Get the current value of the queue in bytes or packets.
@@ -107,21 +112,6 @@ public:
    * \returns The queue size in bytes or packets.
    */
   uint32_t GetQueueSize (void);
-
-  /**
-   * \brief Get the number of packets dropped when packets
-   * arrive at a full queue and cannot be enqueued.
-   *
-   * \returns The number of dropped packets
-   */
-  uint32_t GetDropOverLimit (void);
-
-  /**
-   * \brief Get the number of packets dropped according to CoDel algorithm
-   *
-   * \returns The number of dropped packets
-   */
-  uint32_t GetDropCount (void);
 
   /**
    * \brief Get the target queue delay
@@ -144,7 +134,43 @@ public:
    */
   uint32_t GetDropNext (void);
 
+  // Reasons for dropping packets
+  static constexpr const char* TARGET_EXCEEDED_DROP = "Target exceeded drop";  //!< Sojourn time above target
+  static constexpr const char* OVERLIMIT_DROP = "Overlimit drop";  //!< Overlimit dropped packet
+
 private:
+  /**
+   * \brief Set the maximum amount of packets that can be stored in this queue
+   *
+   * \param maxPackets amount of packets
+   * \deprecated This method will go away in future versions of ns-3.
+   * See instead SetMaxSize()
+   */
+  void SetMaxPackets (uint32_t maxPackets);
+
+  /**
+   * \return the maximum amount of packets that can be stored in this queue
+   * \deprecated This method will go away in future versions of ns-3.
+   * See instead GetMaxSize()
+   */
+  uint32_t GetMaxPackets (void) const;
+
+  /**
+   * \brief Set the maximum amount of bytes that can be stored in this queue
+   *
+   * \param maxBytes amount of bytes
+   * \deprecated This method will go away in future versions of ns-3.
+   * See instead SetMaxSize()
+   */
+  void SetMaxBytes (uint32_t maxBytes);
+
+  /**
+   * \return the maximum amount of bytes that can be stored in this queue
+   * \deprecated This method will go away in future versions of ns-3.
+   * See instead GetMaxSize()
+   */
+  uint32_t GetMaxBytes (void) const;
+
   friend class::CoDelQueueDiscNewtonStepTest;  // Test code
   friend class::CoDelQueueDiscControlLawTest;  // Test code
   /**
@@ -166,7 +192,7 @@ private:
    */
   virtual Ptr<QueueDiscItem> DoDequeue (void);
 
-  virtual Ptr<const QueueDiscItem> DoPeek (void) const;
+  virtual Ptr<const QueueDiscItem> DoPeek (void);
   virtual bool CheckConfig (void);
 
   /**
@@ -242,7 +268,6 @@ private:
   Time m_interval;                        //!< 100 ms sliding minimum time window width
   Time m_target;                          //!< 5 ms target queue delay
   TracedValue<uint32_t> m_count;          //!< Number of packets dropped since entering drop state
-  TracedValue<uint32_t> m_dropCount;      //!< Number of dropped packets according CoDel algorithm
   TracedValue<uint32_t> m_lastCount;      //!< Last number of packets dropped since entering drop state
   TracedValue<bool> m_dropping;           //!< True if in dropping state
   uint16_t m_recInvSqrt;                  //!< Reciprocal inverse square root
@@ -252,9 +277,7 @@ private:
   uint32_t m_state2;                      //!< Number of times we perform next drop while in dropping state
   uint32_t m_state3;                      //!< Number of times we enter drop state and drop the fist packet
   uint32_t m_states;                      //!< Total number of times we are in state 1, state 2, or state 3
-  uint32_t m_dropOverLimit;               //!< The number of packets dropped due to full queue
   QueueDiscMode m_mode;                   //!< The operating mode (Bytes or packets)
-  TracedValue<Time> m_sojourn;            //!< Time in queue
 };
 
 } // namespace ns3

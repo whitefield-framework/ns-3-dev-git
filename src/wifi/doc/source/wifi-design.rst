@@ -155,7 +155,7 @@ found in practice.
 The physical layer and channel models operate on a per-packet basis, with
 no frequency-selective propagation or interference effects when using
 the default YansWifiPhy model.  Directional antennas are also not
-supported at this time.  For additive white gaussian noise (AWGN)
+supported at this time.  For additive white Gaussian noise (AWGN)
 scenarios, or wideband interference scenarios, performance is governed
 by the application of analytical models (based on modulation and factors
 such as channel width) to the received signal-to-noise ratio, where noise
@@ -170,17 +170,23 @@ The following details pertain to the physical layer and channel models:
 * 802.11ax only supports SU PPDU format
 * 802.11ac/ax MU-MIMO is not supported, and no more than 4 antennas can be configured
 * 802.11n/ac/ax beamforming is not supported
+* 802.11 PCF and 802.11 HCF/HCCA are not implemented
+* Authentication and encryption are missing
+* Processing delays are not modeled
 * PLCP preamble reception is not modeled
 * PHY_RXSTART is not supported
+* The current implementation assumes that secondary channels are always higher than primary channels
+* Cases where RTS/CTS and ACK are transmitted using HT/VHT/HE formats are not supported
 
 At the MAC layer, most of the main functions found in deployed Wi-Fi
 equipment for 802.11a/b/e/g/n/ac/ax are implemented, but there are scattered instances
-where some limitations in the models exist.Support for 802.11n and ac is evolving.
-Some additional details are as follows:
+where some limitations in the models exist. Support for 802.11n and ac is evolving.
+
+Some implementation choices that are not imposed by the standard are listed below:
 
 * BSSBasicRateSet for 802.11b has been assumed to be 1-2 Mbit/s
 * BSSBasicRateSet for 802.11a/g has been assumed to be 6-12-24 Mbit/s
-* cases where RTS/CTS and ACK are transmitted using HT/VHT/HE formats are not supported
+* The wifi manager always selects the lowest basic rate for management frames.
 
 Design Details
 **************
@@ -446,7 +452,7 @@ were adapted to use the Spectrum channel API.  This required developing
 a few ``SpectrumModel``-related classes.  The class
 ``WifiSpectrumValueHelper`` is used to create Wi-Fi signals with the
 spectrum framework and spread their energy across the bands.  The 
-spectrum is sub-divided into 312.5 KHz sub-bands (the width of an OFDM
+spectrum is sub-divided into 312.5 kHz sub-bands (the width of an OFDM
 subcarrier).  The power allocated to a particular channel
 is spread across the sub-bands roughly according to how power would 
 be allocated to sub-carriers using an even distribution of power and
