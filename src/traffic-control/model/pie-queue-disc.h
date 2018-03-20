@@ -68,15 +68,6 @@ public:
   virtual ~PieQueueDisc ();
 
   /**
-   * \brief Stats
-   */
-  typedef struct
-  {
-    uint32_t unforcedDrop;      //!< Early probability drops: proactive
-    uint32_t forcedDrop;        //!< Drops due to queue limit: reactive
-  } Stats;
-
-  /**
    * \brief Burst types
    */
   enum BurstStateT
@@ -88,6 +79,7 @@ public:
 
   /**
    * \brief Enumeration of the modes supported in the class.
+   * \deprecated This enum will go away in future versions of ns-3.
    *
    */
   enum QueueDiscMode
@@ -100,6 +92,8 @@ public:
    * \brief Set the operating mode of this queue disc.
    *
    * \param mode The operating mode of this queue disc.
+   * \deprecated This method will go away in future versions of ns-3.
+   * See instead SetMaxSize()
    */
   void SetMode (QueueDiscMode mode);
 
@@ -107,8 +101,10 @@ public:
    * \brief Get the operating mode of this queue disc.
    *
    * \returns The operating mode of this queue disc.
+   * \deprecated This method will go away in future versions of ns-3.
+   * See instead GetMaxSize()
    */
-  QueueDiscMode GetMode (void);
+  QueueDiscMode GetMode (void) const;
 
   /**
    * \brief Get the current value of the queue in bytes or packets.
@@ -121,6 +117,8 @@ public:
    * \brief Set the limit of the queue in bytes or packets.
    *
    * \param lim The limit in bytes or packets.
+   * \deprecated This method will go away in future versions of ns-3.
+   * See instead SetMaxSize()
    */
   void SetQueueLimit (uint32_t lim);
 
@@ -132,13 +130,6 @@ public:
   Time GetQueueDelay (void);
 
   /**
-   * \brief Get PIE statistics after running.
-   *
-   * \returns The drop statistics.
-   */
-  Stats GetStats ();
-
-  /**
    * Assign a fixed random variable stream number to the random variables
    * used by this model.  Return the number of streams (possibly zero) that
    * have been assigned.
@@ -147,6 +138,10 @@ public:
    * \return the number of stream indices assigned by this model
    */
   int64_t AssignStreams (int64_t stream);
+
+  // Reasons for dropping packets
+  static constexpr const char* UNFORCED_DROP = "Unforced drop";  //!< Early probability drops: proactive
+  static constexpr const char* FORCED_DROP = "Forced drop";      //!< Drops due to queue limit: reactive
 
 protected:
   /**
@@ -157,7 +152,7 @@ protected:
 private:
   virtual bool DoEnqueue (Ptr<QueueDiscItem> item);
   virtual Ptr<QueueDiscItem> DoDequeue (void);
-  virtual Ptr<const QueueDiscItem> DoPeek (void) const;
+  virtual Ptr<const QueueDiscItem> DoPeek (void);
   virtual bool CheckConfig (void);
 
   /**
@@ -180,11 +175,9 @@ private:
    */
   void CalculateP ();
 
-  Stats m_stats;                                //!< PIE statistics
+  static const uint64_t DQCOUNT_INVALID = std::numeric_limits<uint64_t>::max();  //!< Invalid dqCount value
 
   // ** Variables supplied by user
-  QueueDiscMode m_mode;                         //!< Mode (bytes or packets)
-  uint32_t m_queueLimit;                        //!< Queue limit in bytes / packets
   Time m_sUpdate;                               //!< Start time of the update timer
   Time m_tUpdate;                               //!< Time period after which CalculateP () is called
   Time m_qDelayRef;                             //!< Desired queue delay
@@ -204,7 +197,7 @@ private:
   bool m_inMeasurement;                         //!< Indicates whether we are in a measurement cycle
   double m_avgDqRate;                           //!< Time averaged dequeue rate
   double m_dqStart;                             //!< Start timestamp of current measurement cycle
-  uint32_t m_dqCount;                           //!< Number of bytes departed since current measurement cycle starts
+  uint64_t m_dqCount;                           //!< Number of bytes departed since current measurement cycle starts
   EventId m_rtrsEvent;                          //!< Event used to decide the decision of interval of drop probability calculation
   Ptr<UniformRandomVariable> m_uv;              //!< Rng stream
 };

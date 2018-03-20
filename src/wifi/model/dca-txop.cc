@@ -25,7 +25,6 @@
 #include "dcf-state.h"
 #include "wifi-mac-queue.h"
 #include "mac-tx-middle.h"
-#include "random-stream.h"
 
 #undef NS_LOG_APPEND_CONTEXT
 #define NS_LOG_APPEND_CONTEXT if (m_low != 0) { std::clog << "[mac=" << m_low->GetAddress () << "] "; }
@@ -76,9 +75,9 @@ DcaTxop::DcaTxop ()
     m_currentPacket (0)
 {
   NS_LOG_FUNCTION (this);
-  m_dcf = new DcfState (this);
+  m_dcf = CreateObject<DcfState> (this);
   m_queue = CreateObject<WifiMacQueue> ();
-  m_rng = new RealRandomStream ();
+  m_rng = CreateObject<UniformRandomVariable> ();
 }
 
 DcaTxop::~DcaTxop ()
@@ -93,36 +92,34 @@ DcaTxop::DoDispose (void)
   m_queue = 0;
   m_low = 0;
   m_stationManager = 0;
-  delete m_dcf;
-  delete m_rng;
   m_dcf = 0;
   m_rng = 0;
   m_txMiddle = 0;
 }
 
 void
-DcaTxop::SetManager (DcfManager *manager)
+DcaTxop::SetManager (const Ptr<DcfManager> manager)
 {
   NS_LOG_FUNCTION (this << manager);
   m_manager = manager;
   m_manager->Add (m_dcf);
 }
 
-void DcaTxop::SetTxMiddle (MacTxMiddle *txMiddle)
+void DcaTxop::SetTxMiddle (const Ptr<MacTxMiddle> txMiddle)
 {
   NS_LOG_FUNCTION (this);
   m_txMiddle = txMiddle;
 }
 
 void
-DcaTxop::SetLow (Ptr<MacLow> low)
+DcaTxop::SetLow (const Ptr<MacLow> low)
 {
   NS_LOG_FUNCTION (this << low);
   m_low = low;
 }
 
 void
-DcaTxop::SetWifiRemoteStationManager (Ptr<WifiRemoteStationManager> remoteManager)
+DcaTxop::SetWifiRemoteStationManager (const Ptr<WifiRemoteStationManager> remoteManager)
 {
   NS_LOG_FUNCTION (this << remoteManager);
   m_stationManager = remoteManager;
@@ -140,6 +137,23 @@ DcaTxop::SetTxFailedCallback (TxFailed callback)
 {
   NS_LOG_FUNCTION (this << &callback);
   m_txFailedCallback = callback;
+}
+
+void
+DcaTxop::SetTxDroppedCallback (TxDropped callback)
+{
+  NS_LOG_FUNCTION (this << &callback);
+  m_txDroppedCallback = callback;
+  m_queue->TraceConnectWithoutContext ("Drop", MakeCallback (&DcaTxop::TxDroppedPacket, this));
+}
+
+void
+DcaTxop::TxDroppedPacket (Ptr<const WifiMacQueueItem> item)
+{
+  if (!m_txDroppedCallback.IsNull ())
+    {
+      m_txDroppedCallback (item->GetPacket ());
+    }
 }
 
 Ptr<WifiMacQueue >
@@ -214,7 +228,7 @@ int64_t
 DcaTxop::AssignStreams (int64_t stream)
 {
   NS_LOG_FUNCTION (this << stream);
-  m_rng->AssignStreams (stream);
+  m_rng->SetStream (stream);
   return 1;
 }
 
@@ -223,7 +237,7 @@ DcaTxop::RestartAccessIfNeeded (void)
 {
   NS_LOG_FUNCTION (this);
   if ((m_currentPacket != 0
-       || m_queue->HasPackets ())
+       || !m_queue->IsEmpty ())
       && !m_dcf->IsAccessRequested ())
     {
       m_manager->RequestAccess (m_dcf);
@@ -235,7 +249,7 @@ DcaTxop::StartAccessIfNeeded (void)
 {
   NS_LOG_FUNCTION (this);
   if (m_currentPacket == 0
-      && m_queue->HasPackets ()
+      && !m_queue->IsEmpty ()
       && !m_dcf->IsAccessRequested ())
     {
       m_manager->RequestAccess (m_dcf);
@@ -254,7 +268,7 @@ DcaTxop::DoInitialize ()
 {
   NS_LOG_FUNCTION (this);
   m_dcf->ResetCw ();
-  m_dcf->StartBackoffNow (m_rng->GetNext (0, m_dcf->GetCw ()));
+  m_dcf->StartBackoffNow (m_rng->GetInteger (0, m_dcf->GetCw ()));
 }
 
 bool
@@ -339,20 +353,13 @@ DcaTxop::GetFragmentPacket (WifiMacHeader *hdr)
   return fragment;
 }
 
-bool
-DcaTxop::NeedsAccess (void) const
-{
-  NS_LOG_FUNCTION (this);
-  return m_queue->HasPackets () || m_currentPacket != 0;
-}
-
 void
 DcaTxop::NotifyAccessGranted (void)
 {
   NS_LOG_FUNCTION (this);
   if (m_currentPacket == 0)
     {
-      if (!m_queue->HasPackets ())
+      if (m_queue->IsEmpty ())
         {
           NS_LOG_DEBUG ("queue empty");
           return;
@@ -373,14 +380,13 @@ DcaTxop::NotifyAccessGranted (void)
                     ", to=" << m_currentHdr.GetAddr1 () <<
                     ", seq=" << m_currentHdr.GetSequenceControl ());
     }
-  m_currentParams.DisableOverrideDurationId ();
   if (m_currentHdr.GetAddr1 ().IsGroup ())
     {
       m_currentParams.DisableRts ();
       m_currentParams.DisableAck ();
       m_currentParams.DisableNextData ();
-      GetLow ()->StartTransmission (m_currentPacket, &m_currentHdr, m_currentParams, this);
       NS_LOG_DEBUG ("tx broadcast");
+      GetLow ()->StartTransmission (m_currentPacket, &m_currentHdr, m_currentParams, this);
     }
   else
     {
@@ -421,7 +427,7 @@ void
 DcaTxop::NotifyCollision (void)
 {
   NS_LOG_FUNCTION (this);
-  m_dcf->StartBackoffNow (m_rng->GetNext (0, m_dcf->GetCw ()));
+  m_dcf->StartBackoffNow (m_rng->GetInteger (0, m_dcf->GetCw ()));
   RestartAccessIfNeeded ();
 }
 
@@ -445,10 +451,25 @@ DcaTxop::NotifySleep (void)
 }
 
 void
+DcaTxop::NotifyOff (void)
+{
+  NS_LOG_FUNCTION (this);
+  m_queue->Flush ();
+  m_currentPacket = 0;
+}
+
+void
 DcaTxop::NotifyWakeUp (void)
 {
   NS_LOG_FUNCTION (this);
   RestartAccessIfNeeded ();
+}
+
+void
+DcaTxop::NotifyOn (void)
+{
+  NS_LOG_FUNCTION (this);
+  StartAccessIfNeeded ();
 }
 
 void
@@ -472,7 +493,7 @@ DcaTxop::MissedCts (void)
     {
       m_dcf->UpdateFailedCw ();
     }
-  m_dcf->StartBackoffNow (m_rng->GetNext (0, m_dcf->GetCw ()));
+  m_dcf->StartBackoffNow (m_rng->GetInteger (0, m_dcf->GetCw ()));
   RestartAccessIfNeeded ();
 }
 
@@ -494,7 +515,7 @@ DcaTxop::GotAck (void)
        */
       m_currentPacket = 0;
       m_dcf->ResetCw ();
-      m_dcf->StartBackoffNow (m_rng->GetNext (0, m_dcf->GetCw ()));
+      m_dcf->StartBackoffNow (m_rng->GetInteger (0, m_dcf->GetCw ()));
       RestartAccessIfNeeded ();
     }
   else
@@ -526,7 +547,7 @@ DcaTxop::MissedAck (void)
       m_currentHdr.SetRetry ();
       m_dcf->UpdateFailedCw ();
     }
-  m_dcf->StartBackoffNow (m_rng->GetNext (0, m_dcf->GetCw ()));
+  m_dcf->StartBackoffNow (m_rng->GetInteger (0, m_dcf->GetCw ()));
   RestartAccessIfNeeded ();
 }
 
@@ -541,7 +562,6 @@ DcaTxop::StartNextFragment (void)
   Ptr<Packet> fragment = GetFragmentPacket (&hdr);
   m_currentParams.EnableAck ();
   m_currentParams.DisableRts ();
-  m_currentParams.DisableOverrideDurationId ();
   if (IsLastFragment ())
     {
       m_currentParams.DisableNextData ();
@@ -567,7 +587,7 @@ DcaTxop::EndTxNoAck (void)
   NS_LOG_DEBUG ("a transmission that did not require an ACK just finished");
   m_currentPacket = 0;
   m_dcf->ResetCw ();
-  m_dcf->StartBackoffNow (m_rng->GetNext (0, m_dcf->GetCw ()));
+  m_dcf->StartBackoffNow (m_rng->GetInteger (0, m_dcf->GetCw ()));
   StartAccessIfNeeded ();
 }
 
