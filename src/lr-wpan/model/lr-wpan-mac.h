@@ -252,6 +252,7 @@ public:
    * \param rxOnWhenIdle set to true to enable the receiver during idle periods
    */
   void SetRxOnWhenIdle (bool rxOnWhenIdle);
+  void SetMacHeaderAdd(bool m_add);
 
   // XXX these setters will become obsolete if we use the attribute system
   /**
@@ -513,6 +514,8 @@ public:
    */
   bool m_macRxOnWhenIdle;
 
+  bool m_macHeaderAdd;
+
   /**
    * Get the macAckWaitDuration attribute value.
    *
@@ -533,6 +536,13 @@ public:
    * \param retries the maximum number of retries
    */
   void SetMacMaxFrameRetries (uint8_t retries);
+
+  /**
+   * Set the promiscuous mode
+   *
+   * \param enable/disable flag
+   */
+  void SetPromiscuousMode (bool val);
 
   /**
    * TracedCallback signature for sent packets.
