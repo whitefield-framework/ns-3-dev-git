@@ -545,7 +545,11 @@ LrWpanMac::PdDataIndication (uint32_t psduLength, Ptr<Packet> p, uint8_t lqi)
           if (!m_mcpsDataIndicationCallback.IsNull ())
             {
               NS_LOG_DEBUG ("promiscuous mode, forwarding up");
-              m_mcpsDataIndicationCallback (params, p);
+              if(m_macHeaderAdd) {
+                m_mcpsDataIndicationCallback (params, p);
+              } else {
+                m_mcpsDataIndicationCallback (params, originalPkt);
+              }
             }
           else
             {
@@ -651,7 +655,11 @@ LrWpanMac::PdDataIndication (uint32_t psduLength, Ptr<Packet> p, uint8_t lqi)
                 {
                   // If it is a data frame, push it up the stack.
                   NS_LOG_DEBUG ("PdDataIndication():  Packet is for me; forwarding up");
-                  m_mcpsDataIndicationCallback (params, p);
+                  if(m_macHeaderAdd) {
+                    m_mcpsDataIndicationCallback (params, p);
+                  } else {
+                    m_mcpsDataIndicationCallback (params, originalPkt);
+                  }
                 }
               else if (receivedMacHdr.IsAcknowledgment () && m_txPkt && m_lrWpanMacState == MAC_ACK_PENDING)
                 {
