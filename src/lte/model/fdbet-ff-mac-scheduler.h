@@ -103,7 +103,9 @@ public:
   virtual void SetLteFfrSapProvider (LteFfrSapProvider* s);
   virtual LteFfrSapUser* GetLteFfrSapUser ();
 
+  /// allow MemberCschedSapProvider<FdBetFfMacScheduler> class friend access
   friend class MemberCschedSapProvider<FdBetFfMacScheduler>;
+  /// allow MemberSchedSapProvider<FdBetFfMacScheduler> class friend access
   friend class MemberSchedSapProvider<FdBetFfMacScheduler>;
 
   /**
@@ -133,7 +135,7 @@ private:
 
   /**
    * Csched LC config request function
-   * \param params the CSched LC config requst parameters
+   * \param params the CSched LC config request parameters
    */
   void DoCschedLcConfigReq (const struct FfMacCschedSapProvider::CschedLcConfigReqParameters& params);
 
@@ -198,7 +200,7 @@ private:
   void DoSchedUlTriggerReq (const struct FfMacSchedSapProvider::SchedUlTriggerReqParameters& params);
 
   /**
-   * Sched UL noise inteference request function
+   * Sched UL noise interference request function
    * \param params the Sched UL noise interference request parameters
    */
   void DoSchedUlNoiseInterferenceReq (const struct FfMacSchedSapProvider::SchedUlNoiseInterferenceReqParameters& params);
@@ -362,7 +364,7 @@ private:
 
   uint16_t m_nextRntiUl; ///< RNTI of the next user to be served next scheduling in UL
 
-  uint32_t m_cqiTimersThreshold; ///< # of TTIs for which a CQI canbe considered valid
+  uint32_t m_cqiTimersThreshold; ///< # of TTIs for which a CQI can be considered valid
 
   std::map <uint16_t,uint8_t> m_uesTxMode; ///< txMode of the UEs
 
@@ -371,7 +373,7 @@ private:
   std::map <uint16_t, uint8_t> m_dlHarqCurrentProcessId; ///< DL HARQ current process ID 
   //HARQ status
   // 0: process Id available
-  // x>0: process Id equal to `x` trasmission count
+  // x>0: process Id equal to `x` transmission count
   std::map <uint16_t, DlHarqProcessesStatus_t> m_dlHarqProcessesStatus; ///< DL HARQ process status
   std::map <uint16_t, DlHarqProcessesTimer_t> m_dlHarqProcessesTimer; ///< DL HARQ process timer
   std::map <uint16_t, DlHarqProcessesDciBuffer_t> m_dlHarqProcessesDciBuffer; ///< DL HARQ process DCI buffer
@@ -381,7 +383,7 @@ private:
   std::map <uint16_t, uint8_t> m_ulHarqCurrentProcessId; ///< UL HARQ current process ID
   //HARQ status
   // 0: process Id available
-  // x>0: process Id equal to `x` trasmission count
+  // x>0: process Id equal to `x` transmission count
   std::map <uint16_t, UlHarqProcessesStatus_t> m_ulHarqProcessesStatus; ///< UL HARQ process status
   std::map <uint16_t, UlHarqProcessesDciBuffer_t> m_ulHarqProcessesDciBuffer; ///< UL HARQ process DCI Buffer
 

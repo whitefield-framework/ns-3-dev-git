@@ -98,6 +98,13 @@ protected:
   void BeforeRTOExpired (const Ptr<const TcpSocketState> tcb, SocketWho who);
 
   /**
+   * \brief Update when RTO expires
+   * \param oldVal old time value
+   * \param newVal new time value
+   */
+  void RTOExpired (Time oldVal, Time newVal);
+
+  /**
    * \brief Do the final checks.
    */
   void FinalChecks ();
@@ -149,16 +156,15 @@ TcpBytesInFlightTest::CreateReceiverErrorModel ()
 void
 TcpBytesInFlightTest::BeforeRTOExpired (const Ptr<const TcpSocketState> tcb, SocketWho who)
 {
-  NS_LOG_DEBUG ("RTO for " << who);
+  NS_LOG_DEBUG ("Before RTO for " << who);
+  GetSenderSocket ()->TraceConnectWithoutContext ("RTO", MakeCallback (&TcpBytesInFlightTest::RTOExpired, this));
+}
 
-  // Reset the bytes in flight
-  // NB: If in the future informations about SACK is maintained, this should be
-  // rewritten
-
-  if (who == SENDER)
-    {
-      m_guessedBytesInFlight = 0;
-    }
+void
+TcpBytesInFlightTest::RTOExpired (Time oldVal, Time newVal)
+{
+  NS_LOG_DEBUG ("RTO expired at " << newVal.GetSeconds ());
+  m_guessedBytesInFlight = 0;
 }
 
 void
@@ -185,21 +191,17 @@ TcpBytesInFlightTest::Rx (const Ptr<const Packet> p, const TcpHeader &h, SocketW
             { // Previously we got some ACKs
               if (h.GetAckNumber () >= m_greatestSeqSent)
                 { // This an ACK which acknowledge all the window
-                  diff -= (m_dupAckRecv * GetSegSize (SENDER));
-
-                  if (diff > m_guessedBytesInFlight)
-                    {
-                      // Our home-made guess is influenced also by retransmission
-                      // so make sure that this does not overflow
-                      diff = m_guessedBytesInFlight;
-                    }
-
+                  m_guessedBytesInFlight = 0; // All outstanding data acked
+                  diff = 0;
                   m_dupAckRecv = 0;
                 }
               else
                 {
                   // Partial ACK: Update the dupAck received count
                   m_dupAckRecv -= diff / GetSegSize (SENDER);
+                  // During fast recovery the TCP data sender respond to a partial acknowledgment
+                  // by inferring that the next in-sequence packet has been lost (RFC5681)
+                  m_guessedBytesInFlight -= GetSegSize (SENDER);
                 }
             }
 
@@ -224,8 +226,8 @@ TcpBytesInFlightTest::Rx (const Ptr<const Packet> p, const TcpHeader &h, SocketW
           // RFC 6675 says after two dupacks, the segment is considered lost
           if (m_dupAckRecv == 3)
             {
-              m_guessedBytesInFlight -= GetSegSize (SENDER);
               NS_LOG_DEBUG ("Loss of a segment detected");
+              m_guessedBytesInFlight -= GetSegSize (SENDER);
             }
           NS_LOG_DEBUG ("Dupack received, Update m_guessedBytesInFlight to " <<
                         m_guessedBytesInFlight);
@@ -271,7 +273,7 @@ TcpBytesInFlightTest::BytesInFlightTrace (uint32_t oldValue, uint32_t newValue)
   NS_LOG_DEBUG ("Socket BytesInFlight=" << newValue <<
                 " mine is=" << m_guessedBytesInFlight);
   NS_TEST_ASSERT_MSG_EQ (m_guessedBytesInFlight, newValue,
-                         "Guessed and measured bytes in flight differs");
+                         "At time " << Simulator::Now ().GetSeconds () << "; guessed and measured bytes in flight differs");
 }
 
 void

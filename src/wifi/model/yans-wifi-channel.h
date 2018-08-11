@@ -22,21 +22,23 @@
 #define YANS_WIFI_CHANNEL_H
 
 #include "ns3/channel.h"
-#include "yans-wifi-phy.h"
 
 namespace ns3 {
 
 class NetDevice;
 class PropagationLossModel;
 class PropagationDelayModel;
+class YansWifiPhy;
+class Packet;
+class Time;
 
 /**
  * \brief a channel to interconnect ns3::YansWifiPhy objects.
  * \ingroup wifi
  *
  * This class is expected to be used in tandem with the ns3::YansWifiPhy
- * class and supports an ns3::PropagationLossModel and an 
- * ns3::PropagationDelayModel.  By default, no propagation models are set; 
+ * class and supports an ns3::PropagationLossModel and an
+ * ns3::PropagationDelayModel.  By default, no propagation models are set;
  * it is the caller's responsibility to set them before using the channel.
  */
 class YansWifiChannel : public Channel
@@ -52,8 +54,8 @@ public:
   virtual ~YansWifiChannel ();
 
   //inherited from Channel.
-  virtual uint32_t GetNDevices (void) const;
-  virtual Ptr<NetDevice> GetDevice (uint32_t i) const;
+  virtual std::size_t GetNDevices (void) const;
+  virtual Ptr<NetDevice> GetDevice (std::size_t i) const;
 
   /**
    * Adds the given YansWifiPhy to the PHY list
@@ -65,11 +67,11 @@ public:
   /**
    * \param loss the new propagation loss model.
    */
-  void SetPropagationLossModel (Ptr<PropagationLossModel> loss);
+  void SetPropagationLossModel (const Ptr<PropagationLossModel> loss);
   /**
    * \param delay the new propagation delay model.
    */
-  void SetPropagationDelayModel (Ptr<PropagationDelayModel> delay);
+  void SetPropagationDelayModel (const Ptr<PropagationDelayModel> delay);
 
   /**
    * \param sender the phy object from which the packet is originating.
@@ -112,7 +114,7 @@ private:
    * \param txPowerDbm the tx power associated to the packet being sent (dBm)
    * \param duration the transmission duration associated with the packet being sent
    */
-  void Receive (Ptr<YansWifiPhy> receiver, Ptr<Packet> packet, double txPowerDbm, Time duration) const;
+  static void Receive (Ptr<YansWifiPhy> receiver, Ptr<Packet> packet, double txPowerDbm, Time duration);
 
   PhyList m_phyList;                   //!< List of YansWifiPhys connected to this YansWifiChannel
   Ptr<PropagationLossModel> m_loss;    //!< Propagation loss model

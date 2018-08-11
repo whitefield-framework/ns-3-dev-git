@@ -277,6 +277,10 @@ LteUeRrc::GetTypeId (void)
                      "trace fired upon failure of a handover procedure",
                      MakeTraceSourceAccessor (&LteUeRrc::m_handoverEndErrorTrace),
                      "ns3::LteUeRrc::ImsiCidRntiTracedCallback")
+    .AddTraceSource ("SCarrierConfigured",
+                     "trace fired after configuring secondary carriers",
+                     MakeTraceSourceAccessor (&LteUeRrc::m_sCarrierConfiguredTrace),
+                     "ns3::LteUeRrc::SCarrierConfiguredTracedCallback")
   ;
   return tid;
 }
@@ -490,9 +494,9 @@ LteUeRrc::InitializeSap (void)
 {
   if (m_numberOfComponentCarriers < MIN_NO_CC || m_numberOfComponentCarriers > MAX_NO_CC)
     {
-      // this check is neede in order to maintain backward compatibility with scripts and tests
+      // this check is needed in order to maintain backward compatibility with scripts and tests
       // if case lte-helper is not used (like in several tests) the m_numberOfComponentCarriers
-      // is not set and then an error is rised
+      // is not set and then an error is raised
       // In this case m_numberOfComponentCarriers is set to 1
       m_numberOfComponentCarriers = MIN_NO_CC;
     }
@@ -1231,12 +1235,15 @@ LteUeRrc::ApplyRadioResourceConfigDedicatedSecondaryCarrier (LteRrcSap::NonCriti
 {
   NS_LOG_FUNCTION (this);
 
+  m_sCellToAddModList = nonCec.sCellsToAddModList;
+
   for(std::list<LteRrcSap::SCellToAddMod>::iterator it = nonCec.sCellsToAddModList.begin(); it!=nonCec.sCellsToAddModList.end(); it++)
     {
       LteRrcSap::SCellToAddMod scell = *it;
       uint8_t ccId = scell.sCellIndex;
 
 
+      uint16_t physCellId = scell.cellIdentification.physCellId;
       uint8_t ulBand = scell.radioResourceConfigCommonSCell.ulConfiguration.ulFreqInfo.ulBandwidth;
       uint32_t ulEarfcn = scell.radioResourceConfigCommonSCell.ulConfiguration.ulFreqInfo.ulCarrierFreq;
       uint8_t dlBand = scell.radioResourceConfigCommonSCell.nonUlConfiguration.dlBandwidth;
@@ -1244,7 +1251,7 @@ LteUeRrc::ApplyRadioResourceConfigDedicatedSecondaryCarrier (LteRrcSap::NonCriti
       uint8_t txMode = scell.radioResourceConfigDedicateSCell.physicalConfigDedicatedSCell.antennaInfo.transmissionMode;
       uint8_t srsIndex = scell.radioResourceConfigDedicateSCell.physicalConfigDedicatedSCell.soundingRsUlConfigDedicated.srsConfigIndex;
 
-      m_cphySapProvider.at (ccId)->SynchronizeWithEnb (m_cellId, dlEarfcn);
+      m_cphySapProvider.at (ccId)->SynchronizeWithEnb (physCellId, dlEarfcn);
       m_cphySapProvider.at (ccId)->SetDlBandwidth (dlBand);
       m_cphySapProvider.at (ccId)->ConfigureUplink (ulEarfcn, ulBand);
       m_cphySapProvider.at (ccId)->ConfigureReferenceSignalPower (scell.radioResourceConfigCommonSCell.nonUlConfiguration.pdschConfigCommon.referenceSignalPower);
@@ -1257,6 +1264,8 @@ LteUeRrc::ApplyRadioResourceConfigDedicatedSecondaryCarrier (LteRrcSap::NonCriti
       m_cphySapProvider.at (ccId)->SetPa (paDouble);
       m_cphySapProvider.at (ccId)->SetSrsConfigurationIndex (srsIndex);
     }
+
+  m_sCarrierConfiguredTrace (this, m_sCellToAddModList);
 }
 
 void 

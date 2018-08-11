@@ -111,7 +111,9 @@ public:
   virtual void SetLteFfrSapProvider (LteFfrSapProvider* s);
   virtual LteFfrSapUser* GetLteFfrSapUser ();
 
+  /// allow MemberCschedSapProvider<CqaFfMacScheduler> class friend access
   friend class MemberCschedSapProvider<CqaFfMacScheduler>;
+  /// allow MemberSchedSapProvider<CqaFfMacScheduler> class friend access
   friend class MemberSchedSapProvider<CqaFfMacScheduler>;
 
   /**
@@ -373,16 +375,16 @@ private:
 
   uint16_t m_nextRntiUl; ///< RNTI of the next user to be served next scheduling in UL
 
-  uint32_t m_cqiTimersThreshold; ///< # of TTIs for which a CQI canbe considered valid
+  uint32_t m_cqiTimersThreshold; ///< # of TTIs for which a CQI can be considered valid
 
   std::map <uint16_t,uint8_t> m_uesTxMode; ///< txMode of the UEs
 
   // HARQ attributes
-  bool m_harqOn; ///< m_harqOn when false inhibit te HARQ mechanisms (by default active)
+  bool m_harqOn; ///< m_harqOn when false inhibit the HARQ mechanisms (by default active)
   std::map <uint16_t, uint8_t> m_dlHarqCurrentProcessId; ///< DL HARQ process ID
   //HARQ status
   // 0: process Id available
-  // x>0: process Id equal to `x` trasmission count
+  // x>0: process Id equal to `x` transmission count
   std::map <uint16_t, DlHarqProcessesStatus_t> m_dlHarqProcessesStatus; ///< DL HARQ process statuses
   std::map <uint16_t, DlHarqProcessesTimer_t> m_dlHarqProcessesTimer; ///< DL HARQ process timers
   std::map <uint16_t, DlHarqProcessesDciBuffer_t> m_dlHarqProcessesDciBuffer; ///< DL HARQ process DCI buffer
@@ -392,7 +394,7 @@ private:
   std::map <uint16_t, uint8_t> m_ulHarqCurrentProcessId; ///< UL HARQ current process ID
   //HARQ status
   // 0: process Id available
-  // x>0: process Id equal to `x` trasmission count
+  // x>0: process Id equal to `x` transmission count
   std::map <uint16_t, UlHarqProcessesStatus_t> m_ulHarqProcessesStatus; ///< UL HARQ process status
   std::map <uint16_t, UlHarqProcessesDciBuffer_t> m_ulHarqProcessesDciBuffer; ///< UL HARQ process DCI buffer
 

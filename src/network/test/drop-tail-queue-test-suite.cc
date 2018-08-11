@@ -18,10 +18,16 @@
 
 #include "ns3/test.h"
 #include "ns3/drop-tail-queue.h"
-#include "ns3/uinteger.h"
+#include "ns3/string.h"
 
 using namespace ns3;
 
+/**
+ * \ingroup network-test
+ * \ingroup tests
+ *
+ * DropTailQueue unit tests.
+ */
 class DropTailQueueTestCase : public TestCase
 {
 public:
@@ -37,7 +43,7 @@ void
 DropTailQueueTestCase::DoRun (void)
 {
   Ptr<DropTailQueue<Packet> > queue = CreateObject<DropTailQueue<Packet> > ();
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("MaxPackets", UintegerValue (3)), true,
+  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("MaxSize", StringValue ("3p")), true,
                          "Verify that we can actually set the attribute");
 
   Ptr<Packet> p1, p2, p3, p4;
@@ -77,7 +83,13 @@ DropTailQueueTestCase::DoRun (void)
   NS_TEST_EXPECT_MSG_EQ ((packet == 0), true, "There are really no packets in there");
 }
 
-static class DropTailQueueTestSuite : public TestSuite
+/**
+ * \ingroup network-test
+ * \ingroup tests
+ *
+ * \brief DropTail Queue TestSuite
+ */
+class DropTailQueueTestSuite : public TestSuite
 {
 public:
   DropTailQueueTestSuite ()
@@ -85,4 +97,6 @@ public:
   {
     AddTestCase (new DropTailQueueTestCase (), TestCase::QUICK);
   }
-} g_dropTailQueueTestSuite;
+};
+
+static DropTailQueueTestSuite g_dropTailQueueTestSuite; //!< Static variable for test initialization

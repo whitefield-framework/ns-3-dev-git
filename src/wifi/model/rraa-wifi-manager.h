@@ -68,15 +68,15 @@ public:
   virtual ~RraaWifiManager ();
 
   // Inherited from WifiRemoteStationManager
-  virtual void SetupPhy (Ptr<WifiPhy> phy);
-  virtual void SetupMac (Ptr<WifiMac> mac);
+  virtual void SetupPhy (const Ptr<WifiPhy> phy);
+  virtual void SetupMac (const Ptr<WifiMac> mac);
   void SetHtSupported (bool enable);
   void SetVhtSupported (bool enable);
   void SetHeSupported (bool enable);
 
 
 private:
-  //overriden from base class
+  //overridden from base class
   WifiRemoteStation * DoCreateStation (void) const;
   void DoReportRxOk (WifiRemoteStation *station,
                      double rxSnr, WifiMode txMode);
@@ -107,18 +107,9 @@ private:
    *
    * \return the index for the maximum transmission rate
    */
-  uint32_t GetMaxRate (RraaWifiRemoteStation *station);
+  uint8_t GetMaxRate (RraaWifiRemoteStation *station) const;
   /**
-   * Return the index for the minimum transmission rate for
-   * the given station.
-   *
-   * \param station
-   *
-   * \return the index for the minimum transmission rate
-   */
-  uint32_t GetMinRate (RraaWifiRemoteStation *station);
-  /**
-   * Check if the counter should be resetted.
+   * Check if the counter should be reset.
    *
    * \param station
    */
@@ -165,7 +156,7 @@ private:
    *
    * \return threshold
    */
-  WifiRraaThresholds GetThresholds (RraaWifiRemoteStation *station, uint32_t rate) const;
+  WifiRraaThresholds GetThresholds (RraaWifiRemoteStation *station, uint8_t rate) const;
   /**
    * Get the estimated TxTime of a packet with a given mode.
    *

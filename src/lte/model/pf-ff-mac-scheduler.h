@@ -102,7 +102,9 @@ public:
   virtual void SetLteFfrSapProvider (LteFfrSapProvider* s);
   virtual LteFfrSapUser* GetLteFfrSapUser ();
 
+  /// allow MemberCschedSapProvider<PfFfMacScheduler> class friend access
   friend class MemberCschedSapProvider<PfFfMacScheduler>;
+  /// allow MemberSchedSapProvider<PfFfMacScheduler> class friend access  
   friend class MemberSchedSapProvider<PfFfMacScheduler>;
 
   /**
@@ -248,7 +250,7 @@ private:
    * \brief LC active per flow
    *
    * \param rnti the RNTI
-   * \returns the LC acive per flow
+   * \returns the LC active per flow
    */
   unsigned int LcActivePerFlow (uint16_t rnti);
 
@@ -379,13 +381,13 @@ private:
 
   uint16_t m_nextRntiUl; ///< RNTI of the next user to be served next scheduling in UL
 
-  uint32_t m_cqiTimersThreshold; ///< # of TTIs for which a CQI canbe considered valid
+  uint32_t m_cqiTimersThreshold; ///< # of TTIs for which a CQI can be considered valid
 
   std::map <uint16_t,uint8_t> m_uesTxMode; ///< txMode of the UEs
 
   // HARQ attributes
   /**
-  * m_harqOn when false inhibit te HARQ mechanisms (by default active)
+  * m_harqOn when false inhibit the HARQ mechanisms (by default active)
   */
   bool m_harqOn;
   std::map <uint16_t, uint8_t> m_dlHarqCurrentProcessId; ///< DL HARQ current process ID

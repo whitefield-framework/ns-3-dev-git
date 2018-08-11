@@ -106,7 +106,7 @@ public:
    * @param [in] schedulerFactory The configured ObjectFactory.
    *
    * The event scheduler can be set at any time: the events scheduled
-   * in the previous scheduler will be transfered to the new scheduler
+   * in the previous scheduler will be transferred to the new scheduler
    * before we start to use it.
    */
   static void SetScheduler (ObjectFactory schedulerFactory);
@@ -184,8 +184,14 @@ public:
    */
   static uint32_t GetContext (void);
 
-  /** Context enum values. */
-  enum {
+  /**
+   * Context enum values.
+   *
+   * \internal
+   * This enum type is fixed to match the representation size
+   * of simulation context.
+   */
+  enum : uint32_t {
     /**
      * Flag for events not associated with any particular context.
      */
@@ -450,7 +456,7 @@ public:
   static EventId Schedule (Time const &time, void (*f)(U1,U2,U3,U4,U5,U6), T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6);
 
 
-  /** @} */
+  /** @} */  // Schedule events (in the same context) to run at a future time.
 
   /**
    * @name Schedule events (in a different context) to run now or at a future time.
@@ -714,7 +720,7 @@ public:
             typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
   static void ScheduleWithContext (uint32_t context, Time const &time, void (*f)(U1,U2,U3,U4,U5,U6), T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6);
 
-  /** @} */
+  /** @} */  // Schedule events (in a different context) to run now or at a future time.
   
   /**
    * @name Schedule events (in the same context) to run now.
@@ -955,7 +961,7 @@ public:
             typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
   static EventId ScheduleNow (void (*f)(U1,U2,U3,U4,U5,U6), T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6);
 
-  /** @} */
+  /** @} */  // Schedule events (in the same context) to run now.
 
   /**
    * @name Schedule events to run at the end of the simulation, when Simulator:Destroy() is called.
@@ -1196,7 +1202,7 @@ public:
             typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
   static EventId ScheduleDestroy (void (*f)(U1,U2,U3,U4,U5,U6), T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6);
 
-  /** @} */
+  /** @} */  // Schedule events to run when Simulator:Destroy() is called.
 
   /**
    * Remove an event from the event list. 
@@ -1367,6 +1373,10 @@ Time Now (void);
 
 namespace ns3 {
 
+// Doxygen has trouble with static template functions in a class:
+// it treats the in-class declaration as different from the
+// out of class definition, so makes two entries in the member list.  Ugh
+  
 template <typename MEM, typename OBJ>
 EventId Simulator::Schedule (Time const &delay, MEM mem_ptr, OBJ obj) 
 {

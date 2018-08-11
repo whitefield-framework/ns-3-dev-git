@@ -134,6 +134,12 @@ MultiModelSpectrumChannel::GetTypeId (void)
                      "reported in this trace. ",
                      MakeTraceSourceAccessor (&MultiModelSpectrumChannel::m_pathLossTrace),
                      "ns3::SpectrumChannel::LossTracedCallback")
+    .AddTraceSource ("TxSigParams",
+                     "This trace is fired whenever a signal is transmitted. "
+                     "The sole parameter is a pointer to a copy of the "
+                     "SpectrumSignalParameters provided by the transmitter.",
+                     MakeTraceSourceAccessor (&MultiModelSpectrumChannel::m_txSigParamsTrace),
+                     "ns3::MultiModelSpectrumChannel::SignalParametersTracedCallback")
   ;
   return tid;
 }
@@ -261,7 +267,8 @@ MultiModelSpectrumChannel::StartTx (Ptr<SpectrumSignalParameters> txParams)
 
   NS_ASSERT (txParams->txPhy);
   NS_ASSERT (txParams->psd);
-
+  Ptr<SpectrumSignalParameters> txParamsTrace = txParams->Copy (); // copy it since traced value cannot be const (because of potential underlying DynamicCasts)
+  m_txSigParamsTrace (txParamsTrace);
 
   Ptr<MobilityModel> txMobility = txParams->txPhy->GetMobility ();
   SpectrumModelUid_t txSpectrumModelUid = txParams->psd->GetSpectrumModelUid ();
@@ -390,18 +397,14 @@ MultiModelSpectrumChannel::StartRx (Ptr<SpectrumSignalParameters> params, Ptr<Sp
   receiver->StartRx (params);
 }
 
-
-
-uint32_t
+std::size_t
 MultiModelSpectrumChannel::GetNDevices (void) const
 {
   return m_numDevices;
-
 }
 
-
 Ptr<NetDevice>
-MultiModelSpectrumChannel::GetDevice (uint32_t i) const
+MultiModelSpectrumChannel::GetDevice (std::size_t i) const
 {
   NS_ASSERT (i < m_numDevices);
   // this method implementation is computationally intensive. This
@@ -412,7 +415,7 @@ MultiModelSpectrumChannel::GetDevice (uint32_t i) const
   // acceptable as it is not used much at run time (often not at all).
   // On the other hand, having slow SpectrumModel conversion would be
   // less acceptable. 
-  uint32_t j = 0;
+  std::size_t j = 0;
   for (RxSpectrumModelInfoMap_t::const_iterator rxInfoIterator = m_rxSpectrumModelInfoMap.begin ();
        rxInfoIterator !=  m_rxSpectrumModelInfoMap.end ();
        ++rxInfoIterator)
@@ -438,14 +441,21 @@ void
 MultiModelSpectrumChannel::AddPropagationLossModel (Ptr<PropagationLossModel> loss)
 {
   NS_LOG_FUNCTION (this << loss);
-  NS_ASSERT (m_propagationLoss == 0);
+  if (m_propagationLoss)
+    {
+      loss->SetNext (m_propagationLoss);
+    }
   m_propagationLoss = loss;
 }
 
 void
 MultiModelSpectrumChannel::AddSpectrumPropagationLossModel (Ptr<SpectrumPropagationLossModel> loss)
 {
-  NS_ASSERT (m_spectrumPropagationLoss == 0);
+  NS_LOG_FUNCTION (this << loss);
+  if (m_spectrumPropagationLoss)
+    {
+      loss->SetNext (m_spectrumPropagationLoss);
+    }
   m_spectrumPropagationLoss = loss;
 }
 

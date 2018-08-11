@@ -720,7 +720,7 @@ you to the documentation for the latest stable release of |ns3|.  If
 you select the "API Documentation" link, you will be taken to the
 |ns3| API documentation page.
 
-In the sidebar you should see a hierachy that begins
+In the sidebar you should see a hierarchy that begins
 
 *  ns-3
 
@@ -1106,7 +1106,7 @@ there is some English:
   This class template implements the Functor Design Pattern. It is used to declare the type of a **Callback**:
 
   * the first non-optional template argument represents the return type of the callback.
-  * the reminaining (optional) template arguments represent the type of the subsequent arguments to the callback.
+  * the remaining (optional) template arguments represent the type of the subsequent arguments to the callback.
   * up to nine arguments are supported.
 
 We are trying to figure out what the
@@ -1216,7 +1216,7 @@ return type for a ``TracedValue`` callback function is always
 The ``.AddTraceSource`` in the ``GetTypeId`` method provides the
 "hooks" used for connecting the trace source to the outside world
 through the Config system.  We already discussed the first three
-agruments to ``AddTraceSource``: the Attribute name for the Config
+arguments to ``AddTraceSource``: the Attribute name for the Config
 system, a help string, and the address of the TracedValue class data
 member.
 
@@ -1272,7 +1272,7 @@ the list of TraceSources you will find
 
   **TraceSources**
 
-  * **CongestionWindow**: The TCP connnection's congestion window
+  * **CongestionWindow**: The TCP connection's congestion window
 
     Callback signature:  **ns3::TracedValueCallback::Uint32**
 
@@ -1369,7 +1369,7 @@ didn't exist yet during configuration time?).  As a result, during the
 configuration phase you can't connect a trace source to a trace sink
 if one of them is created dynamically during the simulation.
 
-The two solutions to this connundrum are
+The two solutions to this conundrum are
 
 #. Create a simulator event that is run after the dynamic object is
    created and hook the trace when that event is executed; or
@@ -1456,7 +1456,7 @@ problem described above with ``Socket``.
   // ===========================================================================
   //
 
-This should also be self-explanatory.  
+This should also be self-explanatory.
 
 The next part is the declaration of the ``MyApp`` ``Application`` that
 we put together to allow the ``Socket`` to be created at configuration
@@ -1511,7 +1511,7 @@ models, you probably want to understand this section.
 
 The most common way to start pumping events is to start an
 ``Application``.  This is done as the result of the following
-(hopefully) familar lines of an |ns3| script::
+(hopefully) familiar lines of an |ns3| script::
 
   ApplicationContainer apps = ...
   apps.Start (Seconds (1.0));
@@ -2216,7 +2216,7 @@ creates a PCAP file named "sixth.pcap" with file mode "w".  This means
 that the new file is truncated (contents deleted) if an existing file
 with that name is found.  The final parameter is the "data link type"
 of the new PCAP file.  These are the same as the PCAP library data
-link types defined in ``bpf.h`` if you are familar with PCAP.  In this
+link types defined in ``bpf.h`` if you are familiar with PCAP.  In this
 case, ``DLT_PPP`` indicates that the PCAP file is going to contain
 packets prefixed with point to point headers.  This is true since the
 packets are coming from our point-to-point device driver.  Other

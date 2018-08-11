@@ -59,8 +59,9 @@ public:
   virtual void SetLteFfrRrcSapUser (LteFfrRrcSapUser* s);
   virtual LteFfrRrcSapProvider* GetLteFfrRrcSapProvider ();
 
-  // let the forwarder class access the protected and private members
+  /// let the forwarder class access the protected and private members
   friend class MemberLteFfrSapProvider<LteFfrEnhancedAlgorithm>;
+  /// let the forwarder class access the protected and private members
   friend class MemberLteFfrRrcSapProvider<LteFfrEnhancedAlgorithm>;
 
 protected:
@@ -119,9 +120,9 @@ private:
    */
   double EstimateUlSinr (uint16_t rnti, uint16_t rb, std::map <uint16_t, std::vector <double> > ulCqiMap);
   /**
-   * Get CQI from spectral efficency
+   * Get CQI from spectral efficiency
    *
-   * \param s spectral efficency
+   * \param s spectral efficiency
    * \returns CQI
    */
   int GetCqiFromSpectralEfficiency (double s);

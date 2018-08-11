@@ -79,12 +79,19 @@ class LteSignalingRadioBearerInfo;
 class LteUeRrc : public Object
 {
 
+  /// allow UeMemberLteUeCmacSapUser class friend access
   friend class UeMemberLteUeCmacSapUser;
+  /// allow UeRrcMemberLteEnbCmacSapUser class friend access
   friend class UeRrcMemberLteEnbCmacSapUser;
+  /// allow LtePdcpSpecificLtePdcpSapUser<LteUeRrc> class friend access
   friend class LtePdcpSpecificLtePdcpSapUser<LteUeRrc>;
+  /// allow MemberLteAsSapProvider<LteUeRrc> class friend access
   friend class MemberLteAsSapProvider<LteUeRrc>;
+  /// allow MemberLteUeCphySapUser<LteUeRrc> class friend access
   friend class MemberLteUeCphySapUser<LteUeRrc>;
+  /// allow MemberLteUeRrcSapProvider<LteUeRrc> class friend access
   friend class MemberLteUeRrcSapProvider<LteUeRrc>;
+  /// allow MemberLteUeCcmRrcSapUser<LteUeRrc> class friend access
   friend class MemberLteUeCcmRrcSapUser<LteUeRrc>;
 
 public:
@@ -345,6 +352,15 @@ public:
     (uint64_t imsi, uint16_t cellId, uint16_t rnti,
      State oldState, State newState);
 
+  /**
+    * TracedCallback signature for secondary carrier configuration events.
+    *
+    * \param [in] Pointer to UE RRC
+    * \param [in] List of LteRrcSap::SCellToAddMod
+    */
+  typedef void (* SCarrierConfiguredTracedCallback)
+    (Ptr<LteUeRrc>, std::list<LteRrcSap::SCellToAddMod>);
+
 
 private:
 
@@ -427,13 +443,25 @@ private:
 
   // RRC SAP methods
 
-  /// Part of the RRC protocol. Implement the LteUeRrcSapProvider::CompleteSetup interface.
+  /**
+   * Part of the RRC protocol. Implement the LteUeRrcSapProvider::CompleteSetup interface.
+   * \param params the LteUeRrcSapProvider::CompleteSetupParameters
+   */
   void DoCompleteSetup (LteUeRrcSapProvider::CompleteSetupParameters params);
-  /// Part of the RRC protocol. Implement the LteUeRrcSapProvider::RecvSystemInformation interface.
+  /**
+   * Part of the RRC protocol. Implement the LteUeRrcSapProvider::RecvSystemInformation interface.
+   * \param msg the LteRrcSap::SystemInformation
+   */
   void DoRecvSystemInformation (LteRrcSap::SystemInformation msg);
-  /// Part of the RRC protocol. Implement the LteUeRrcSapProvider::RecvRrcConnectionSetup interface.
+  /**
+   * Part of the RRC protocol. Implement the LteUeRrcSapProvider::RecvRrcConnectionSetup interface.
+   * \param msg the LteRrcSap::RrcConnectionSetup
+   */
   void DoRecvRrcConnectionSetup (LteRrcSap::RrcConnectionSetup msg);
-  /// Part of the RRC protocol. Implement the LteUeRrcSapProvider::RecvRrcConnectionReconfiguration interface.
+  /**
+   * Part of the RRC protocol. Implement the LteUeRrcSapProvider::RecvRrcConnectionReconfiguration interface.
+   * \param msg the LteRrcSap::RrcConnectionReconfiguration
+   */
   void DoRecvRrcConnectionReconfiguration (LteRrcSap::RrcConnectionReconfiguration msg);
   /**
    * Part of the RRC protocol. Implement the LteUeRrcSapProvider::RecvRrcConnectionReestablishment interface.
@@ -450,7 +478,10 @@ private:
    * \param msg LteRrcSap::RrcConnectionRelease
    */
   void DoRecvRrcConnectionRelease (LteRrcSap::RrcConnectionRelease msg);
-  /// Part of the RRC protocol. Implement the LteUeRrcSapProvider::RecvRrcConnectionReject interface.
+  /**
+   * Part of the RRC protocol. Implement the LteUeRrcSapProvider::RecvRrcConnectionReject interface.
+   * \param msg the LteRrcSap::RrcConnectionReject
+   */
   void DoRecvRrcConnectionReject (LteRrcSap::RrcConnectionReject msg);
 
   /**
@@ -648,12 +679,12 @@ private:
   void SendMeasurementReport (uint8_t measId);
 
   /**
-   * Apply radio resoure config dedicated.
+   * Apply radio resource config dedicated.
    * \param rrcd LteRrcSap::RadioResourceConfigDedicated
    */
   void ApplyRadioResourceConfigDedicated (LteRrcSap::RadioResourceConfigDedicated rrcd);
   /**
-   * Apply radio resoure config dedicated secondary carrier.
+   * Apply radio resource config dedicated secondary carrier.
    * \param nonCec LteRrcSap::NonCriticalExtensionConfiguration
    */
   void ApplyRadioResourceConfigDedicatedSecondaryCarrier (LteRrcSap::NonCriticalExtensionConfiguration nonCec);
@@ -692,9 +723,9 @@ private:
   LteAsSapProvider* m_asSapProvider; ///< AS SAP provider
   LteAsSapUser* m_asSapUser; ///< AS SAP user
 
-  // Receive API calls from the LteUeComponetCarrierManager  instance.
+  // Receive API calls from the LteUeComponentCarrierManager  instance.
   // LteCcmRrcSapUser* m_ccmRrcSapUser;
-  /// Interface to the LteUeComponetCarrierManage instance.
+  /// Interface to the LteUeComponentCarrierManage instance.
   LteUeCcmRrcSapProvider* m_ccmRrcSapProvider; ///< CCM RRC SAP provider
   LteUeCcmRrcSapUser* m_ccmRrcSapUser; ///< CCM RRC SAP user
 
@@ -746,6 +777,7 @@ private:
 
   uint32_t m_dlEarfcn;  /**< Downlink carrier frequency. */
   uint32_t m_ulEarfcn;  /**< Uplink carrier frequency. */
+  std::list<LteRrcSap::SCellToAddMod> m_sCellToAddModList; /**< Secondary carriers. */
 
   /**
    * The `MibReceived` trace source. Fired upon reception of Master Information
@@ -820,6 +852,12 @@ private:
    * procedure. Exporting IMSI, cell ID, and RNTI.
    */
   TracedCallback<uint64_t, uint16_t, uint16_t> m_handoverEndErrorTrace;
+  /**
+   * The `SCarrierConfigured` trace source. Fired after the configuration
+   * of secondary carriers received through RRC Connection Reconfiguration
+   * message.
+   */
+  TracedCallback<Ptr<LteUeRrc>, std::list<LteRrcSap::SCellToAddMod> > m_sCarrierConfiguredTrace;
 
   /// True if a connection request by upper layers is pending.
   bool m_connectionPending;
@@ -989,7 +1027,7 @@ private:
    * applied to the measurement results and they are used by *UE measurements*
    * function:
    * - LteUeRrc::MeasurementReportTriggering: in this case it is not set any
-   *   measurment related to seconday carrier components since the 
+   *   measurement related to seconday carrier components since the 
    *   A6 event is not implemented
    * - LteUeRrc::SendMeasurementReport: in this case the report are sent.
    */

@@ -29,16 +29,12 @@
 #include "ns3/callback.h"
 #include "ns3/packet.h"
 #include "ns3/nstime.h"
-#include "ns3/wifi-remote-station-manager.h"
 #include "ns3/regular-wifi-mac.h"
 #include "ns3/mesh-wifi-interface-mac-plugin.h"
 #include "ns3/event-id.h"
-#include "qos-utils.h"
 
 namespace ns3 {
 
-class WifiMacHeader;
-class DcaTxop;
 class UniformRandomVariable;
 /**
  * \ingroup mesh
@@ -54,7 +50,10 @@ class UniformRandomVariable;
 class MeshWifiInterfaceMac : public RegularWifiMac
 {
 public:
-  /// Never forget to support typeid
+  /**
+   * \brief Get the type ID.
+   * \return the object TypeId
+   */
   static TypeId GetTypeId ();
   /// C-tor
   MeshWifiInterfaceMac ();
@@ -112,7 +111,11 @@ public:
    *
    * Number of channels to use must be limited elsewhere.
    */
-  /// Current channel Id
+
+  /**
+   * Current channel Id
+   * \returns the frequency channel
+   */
   uint16_t GetFrequencyChannel () const;
   /**
    * Switch frequency channel.
@@ -121,7 +124,12 @@ public:
    */
   void SwitchFrequencyChannel (uint16_t new_id);
 
-  /// To be used by plugins sending management frames.
+  /**
+   * To be used by plugins sending management frames.
+   *
+   * \param frame the management frame
+   * \param hdr the wifi MAC header
+   */
   void SendManagementFrame (Ptr<Packet> frame, const WifiMacHeader& hdr);
   /**
    * Check supported rates.
@@ -141,10 +149,23 @@ public:
   void Report (std::ostream &) const;
   /// Reset statistics
   void ResetStats ();
-  /// Enable/disable beacons
+  /**
+   * Enable/disable beacons
+   *
+   * \param enable enable / disable flag
+   */
   void SetBeaconGeneration (bool enable);
-  /// Get phy standard in use
+  /**
+   * Get phy standard in use
+   *
+   * \returns the wifi phy standard
+   */
   WifiPhyStandard GetPhyStandard () const;
+  /**
+   * Finish configuration based on the WifiPhyStandard being provided
+   *
+   * \param standard the WifiPhyStandard being configured
+   */
   virtual void FinishConfigureStandard (enum WifiPhyStandard standard);
   /**
    * Assign a fixed random variable stream number to the random variables
@@ -156,15 +177,30 @@ public:
    */
   int64_t AssignStreams (int64_t stream);
 private:
-  /// Frame receive handler
-  void  Receive (Ptr<Packet> packet, WifiMacHeader const *hdr);
-  /// Send frame. Frame is supposed to be tagged by routing information.
-  void  ForwardDown (Ptr<const Packet> packet, Mac48Address from, Mac48Address to);
+  /**
+   * Frame receive handler
+   *
+   * \param packet the received packet
+   * \param hdr the wifi MAC header
+   */
+  void Receive (Ptr<Packet> packet, WifiMacHeader const *hdr);
+  /**
+   * Send frame. Frame is supposed to be tagged by routing information.
+   *
+   * \param packet the packet to forward
+   * \param from the from address
+   * \param to the to address
+   */
+  void ForwardDown (Ptr<const Packet> packet, Mac48Address from, Mac48Address to);
   /// Send beacon
   void SendBeacon ();
   /// Schedule next beacon
   void ScheduleNextBeacon ();
-  /// Get current beaconing status
+  /**
+   * Get current beaconing status
+   *
+   * \returns true if beacon active
+   */
   bool GetBeaconGeneration () const;
   /// Real d-tor
   virtual void DoDispose ();

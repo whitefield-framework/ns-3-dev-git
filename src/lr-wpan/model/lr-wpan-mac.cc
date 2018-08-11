@@ -265,160 +265,182 @@ LrWpanMac::McpsDataRequest (McpsDataRequestParams params, Ptr<Packet> p)
 
   if(m_macHeaderAdd)
   {  //RJ: Prepare MAC hdr only if req. Openthread does not require.
-    McpsDataConfirmParams confirmParams;
+      McpsDataConfirmParams confirmParams;
 
-    confirmParams.m_msduHandle = params.m_msduHandle;
-    LrWpanMacHeader macHdr (LrWpanMacHeader::LRWPAN_MAC_DATA, m_macDsn.GetValue ());
-    m_macDsn++;
+      LrWpanMacHeader macHdr (LrWpanMacHeader::LRWPAN_MAC_DATA, m_macDsn.GetValue ());
+      m_macDsn++;
 
-    if (p->GetSize () > LrWpanPhy::aMaxPhyPacketSize - aMinMPDUOverhead)
-      {
-        // Note, this is just testing maximum theoretical frame size per the spec
-        // The frame could still be too large once headers are put on
-        // in which case the phy will reject it instead
-        NS_LOG_ERROR (this << " packet too big: " << p->GetSize ());
-        confirmParams.m_status = IEEE_802_15_4_FRAME_TOO_LONG;
-        if (!m_mcpsDataConfirmCallback.IsNull ())
-          {
-            m_mcpsDataConfirmCallback (confirmParams);
-          }
-        return;
-      }
+      if (p->GetSize () > LrWpanPhy::aMaxPhyPacketSize - aMinMPDUOverhead)
+        {
+          // Note, this is just testing maximum theoretical frame size per the spec
+          // The frame could still be too large once headers are put on
+          // in which case the phy will reject it instead
+          NS_LOG_ERROR (this << " packet too big: " << p->GetSize ());
+          confirmParams.m_status = IEEE_802_15_4_FRAME_TOO_LONG;
+          if (!m_mcpsDataConfirmCallback.IsNull ())
+            {
+              m_mcpsDataConfirmCallback (confirmParams);
+            }
+          return;
+        }
 
-    if ((params.m_srcAddrMode == NO_PANID_ADDR)
-        && (params.m_dstAddrMode == NO_PANID_ADDR))
-      {
-        NS_LOG_ERROR (this << " Can not send packet with no Address field" );
-        confirmParams.m_status = IEEE_802_15_4_INVALID_ADDRESS;
-        if (!m_mcpsDataConfirmCallback.IsNull ())
-          {
-            m_mcpsDataConfirmCallback (confirmParams);
-          }
-        return;
-      }
-    switch (params.m_srcAddrMode)
-      {
-      case NO_PANID_ADDR:
-        macHdr.SetSrcAddrMode (params.m_srcAddrMode);
-        macHdr.SetNoPanIdComp ();
-        break;
-      case ADDR_MODE_RESERVED:
-        macHdr.SetSrcAddrMode (params.m_srcAddrMode);
-        break;
-      case SHORT_ADDR:
-        macHdr.SetSrcAddrMode (params.m_srcAddrMode);
-        macHdr.SetSrcAddrFields (GetPanId (), GetShortAddress ());
-        break;
-      case EXT_ADDR:
-        macHdr.SetSrcAddrMode (params.m_srcAddrMode);
-        macHdr.SetSrcAddrFields (GetPanId (), GetExtendedAddress ());
-        break;
-      default:
-        NS_LOG_ERROR (this << " Can not send packet with incorrect Source Address mode = " << params.m_srcAddrMode);
-        confirmParams.m_status = IEEE_802_15_4_INVALID_ADDRESS;
-        if (!m_mcpsDataConfirmCallback.IsNull ())
-          {
-            m_mcpsDataConfirmCallback (confirmParams);
-          }
-        return;
-      }
+      if ((params.m_srcAddrMode == NO_PANID_ADDR)
+          && (params.m_dstAddrMode == NO_PANID_ADDR))
+        {
+          NS_LOG_ERROR (this << " Can not send packet with no Address field" );
+          confirmParams.m_status = IEEE_802_15_4_INVALID_ADDRESS;
+          if (!m_mcpsDataConfirmCallback.IsNull ())
+            {
+              m_mcpsDataConfirmCallback (confirmParams);
+            }
+          return;
+        }
+      switch (params.m_srcAddrMode)
+        {
+        case NO_PANID_ADDR:
+          macHdr.SetSrcAddrMode (params.m_srcAddrMode);
+          macHdr.SetNoPanIdComp ();
+          break;
+        case ADDR_MODE_RESERVED:
+          NS_ABORT_MSG ("Can not set source address type to ADDR_MODE_RESERVED. Aborting.");
+          break;
+        case SHORT_ADDR:
+          macHdr.SetSrcAddrMode (params.m_srcAddrMode);
+          macHdr.SetSrcAddrFields (GetPanId (), GetShortAddress ());
+          break;
+        case EXT_ADDR:
+          macHdr.SetSrcAddrMode (params.m_srcAddrMode);
+          macHdr.SetSrcAddrFields (GetPanId (), GetExtendedAddress ());
+          break;
+        default:
+          NS_LOG_ERROR (this << " Can not send packet with incorrect Source Address mode = " << params.m_srcAddrMode);
+          confirmParams.m_status = IEEE_802_15_4_INVALID_ADDRESS;
+          if (!m_mcpsDataConfirmCallback.IsNull ())
+            {
+              m_mcpsDataConfirmCallback (confirmParams);
+            }
+          return;
+        }
+      switch (params.m_dstAddrMode)
+        {
+        case NO_PANID_ADDR:
+          macHdr.SetDstAddrMode (params.m_dstAddrMode);
+          macHdr.SetNoPanIdComp ();
+          break;
+        case ADDR_MODE_RESERVED:
+          NS_ABORT_MSG ("Can not set destination address type to ADDR_MODE_RESERVED. Aborting.");
+          break;
+        case SHORT_ADDR:
+          macHdr.SetDstAddrMode (params.m_dstAddrMode);
+          macHdr.SetDstAddrFields (params.m_dstPanId, params.m_dstAddr);
+          break;
+        case EXT_ADDR:
+          macHdr.SetDstAddrMode (params.m_dstAddrMode);
+          macHdr.SetDstAddrFields (params.m_dstPanId, params.m_dstExtAddr);
+          break;
+        default:
+          NS_LOG_ERROR (this << " Can not send packet with incorrect Destination Address mode = " << params.m_dstAddrMode);
+          confirmParams.m_status = IEEE_802_15_4_INVALID_ADDRESS;
+          if (!m_mcpsDataConfirmCallback.IsNull ())
+            {
+              m_mcpsDataConfirmCallback (confirmParams);
+            }
+          return;
+        }
 
-    macHdr.SetDstAddrMode (params.m_dstAddrMode);
-    // TODO: Add field for EXT_ADDR destination address (and use it here).
-    macHdr.SetDstAddrFields (params.m_dstPanId, params.m_dstAddr);
-    macHdr.SetSecDisable ();
-    //extract the last 3 bits in TxOptions and map to macHdr
-    int b0 = params.m_txOptions & TX_OPTION_ACK;
-    int b1 = params.m_txOptions & TX_OPTION_GTS;
-    int b2 = params.m_txOptions & TX_OPTION_INDIRECT;
-    if (b0 == TX_OPTION_ACK)
-      {
-        // Set AckReq bit only if the destination is not the broadcast address.
-        if (!(macHdr.GetDstAddrMode () == SHORT_ADDR && macHdr.GetShortDstAddr () == "ff:ff"))
-          {
-            macHdr.SetAckReq ();
-          }
-      }
-    else if (b0 == 0)
-      {
-        macHdr.SetNoAckReq ();
-      }
-    else
-      {
-        confirmParams.m_status = IEEE_802_15_4_INVALID_PARAMETER;
-        NS_LOG_ERROR (this << "Incorrect TxOptions bit 0 not 0/1");
-        if (!m_mcpsDataConfirmCallback.IsNull ())
-          {
-            m_mcpsDataConfirmCallback (confirmParams);
-          }
-        return;
-      }
+      macHdr.SetSecDisable ();
+      //extract the last 3 bits in TxOptions and map to macHdr
+      int b0 = params.m_txOptions & TX_OPTION_ACK;
+      int b1 = params.m_txOptions & TX_OPTION_GTS;
+      int b2 = params.m_txOptions & TX_OPTION_INDIRECT;
+      if (b0 == TX_OPTION_ACK)
+        {
+          // Set AckReq bit only if the destination is not the broadcast address.
+          if (!(macHdr.GetDstAddrMode () == SHORT_ADDR && macHdr.GetShortDstAddr () == "ff:ff"))
+            {
+              macHdr.SetAckReq ();
+            }
+        }
+      else if (b0 == 0)
+        {
+          macHdr.SetNoAckReq ();
+        }
+      else
+        {
+          confirmParams.m_status = IEEE_802_15_4_INVALID_PARAMETER;
+          NS_LOG_ERROR (this << "Incorrect TxOptions bit 0 not 0/1");
+          if (!m_mcpsDataConfirmCallback.IsNull ())
+            {
+              m_mcpsDataConfirmCallback (confirmParams);
+            }
+          return;
+        }
 
-    //if is Slotted CSMA means its beacon enabled
-    if (m_csmaCa->IsSlottedCsmaCa ())
-      {
-        if (b1 == TX_OPTION_GTS)
-          {
-            //TODO:GTS Transmission
-          }
-        else if (b1 == 0)
-          {
-            //TODO:CAP Transmission
-          }
-        else
-          {
-            NS_LOG_ERROR (this << "Incorrect TxOptions bit 1 not 0/1");
-            confirmParams.m_status = IEEE_802_15_4_INVALID_PARAMETER;
-            if (!m_mcpsDataConfirmCallback.IsNull ())
-              {
-                m_mcpsDataConfirmCallback (confirmParams);
-              }
-            return;
-          }
-      }
-    else
-      {
-        if (b1 != 0)
-          {
-            NS_LOG_ERROR (this << "for non-beacon-enables PAN, bit 1 should always be set to 0");
-            confirmParams.m_status = IEEE_802_15_4_INVALID_PARAMETER;
-            if (!m_mcpsDataConfirmCallback.IsNull ())
-              {
-                m_mcpsDataConfirmCallback (confirmParams);
-              }
-            return;
-          }
-      }
+      //if is Slotted CSMA means its beacon enabled
+      if (m_csmaCa->IsSlottedCsmaCa ())
+        {
+          if (b1 == TX_OPTION_GTS)
+            {
+              //TODO:GTS Transmission
+            }
+          else if (b1 == 0)
+            {
+              //TODO:CAP Transmission
+            }
+          else
+            {
+              NS_LOG_ERROR (this << "Incorrect TxOptions bit 1 not 0/1");
+              confirmParams.m_status = IEEE_802_15_4_INVALID_PARAMETER;
+              if (!m_mcpsDataConfirmCallback.IsNull ())
+                {
+                  m_mcpsDataConfirmCallback (confirmParams);
+                }
+              return;
+            }
+        }
+      else
+        {
+          if (b1 != 0)
+            {
+              NS_LOG_ERROR (this << "for non-beacon-enables PAN, bit 1 should always be set to 0");
+              confirmParams.m_status = IEEE_802_15_4_INVALID_PARAMETER;
+              if (!m_mcpsDataConfirmCallback.IsNull ())
+                {
+                  m_mcpsDataConfirmCallback (confirmParams);
+                }
+              return;
+            }
+        }
 
-    if (b2 == TX_OPTION_INDIRECT)
-      {
-        //TODO :indirect tx
-      }
-    else if (b2 == 0)
-      {
-        //TODO :direct tx
-      }
-    else
-      {
-        NS_LOG_ERROR (this << "Incorrect TxOptions bit 2 not 0/1");
-        confirmParams.m_status = IEEE_802_15_4_INVALID_PARAMETER;
-        if (!m_mcpsDataConfirmCallback.IsNull ())
-          {
-            m_mcpsDataConfirmCallback (confirmParams);
-          }
-        return;
-      }
+      if (b2 == TX_OPTION_INDIRECT)
+        {
+          //TODO :indirect tx
+        }
+      else if (b2 == 0)
+        {
+          //TODO :direct tx
+        }
+      else
+        {
+          NS_LOG_ERROR (this << "Incorrect TxOptions bit 2 not 0/1");
+          confirmParams.m_status = IEEE_802_15_4_INVALID_PARAMETER;
+          if (!m_mcpsDataConfirmCallback.IsNull ())
+            {
+              m_mcpsDataConfirmCallback (confirmParams);
+            }
+          return;
+        }
 
-    p->AddHeader (macHdr);
+      p->AddHeader (macHdr);
 
-    LrWpanMacTrailer macTrailer;
-    // Calculate FCS if the global attribute ChecksumEnable is set.
-    if (Node::ChecksumEnabled ())
-      {
-        macTrailer.EnableFcs (true);
-        macTrailer.SetFcs (p);
-      }
-    p->AddTrailer (macTrailer);
+      LrWpanMacTrailer macTrailer;
+      // Calculate FCS if the global attribute ChecksumEnable is set.
+      if (Node::ChecksumEnabled ())
+        {
+          macTrailer.EnableFcs (true);
+          macTrailer.SetFcs (p);
+        }
+      p->AddTrailer (macTrailer);
   }
 
   m_macTxEnqueueTrace (p);
@@ -524,20 +546,34 @@ LrWpanMac::PdDataIndication (uint32_t psduLength, Ptr<Packet> p, uint8_t lqi)
       params.m_mpduLinkQuality = lqi;
       params.m_srcPanId = receivedMacHdr.GetSrcPanId ();
       params.m_srcAddrMode = receivedMacHdr.GetSrcAddrMode ();
-      // TODO: Add field for EXT_ADDR source address.
-      if (params.m_srcAddrMode == SHORT_ADDR)
+      switch (params.m_srcAddrMode)
         {
+        case SHORT_ADDR:
           params.m_srcAddr = receivedMacHdr.GetShortSrcAddr ();
+          NS_LOG_DEBUG ("Packet from " << params.m_srcAddr);
+          break;
+        case EXT_ADDR:
+          params.m_srcExtAddr = receivedMacHdr.GetExtSrcAddr ();
+          NS_LOG_DEBUG ("Packet from " << params.m_srcExtAddr);
+          break;
+        default:
+          break;
         }
       params.m_dstPanId = receivedMacHdr.GetDstPanId ();
       params.m_dstAddrMode = receivedMacHdr.GetDstAddrMode ();
-      // TODO: Add field for EXT_ADDR destination address.
-      if (params.m_dstAddrMode == SHORT_ADDR)
+      switch (params.m_dstAddrMode)
         {
+        case SHORT_ADDR:
           params.m_dstAddr = receivedMacHdr.GetShortDstAddr ();
+          NS_LOG_DEBUG ("Packet to " << params.m_dstAddr);
+          break;
+        case EXT_ADDR:
+          params.m_dstExtAddr = receivedMacHdr.GetExtDstAddr ();
+          NS_LOG_DEBUG ("Packet to " << params.m_dstExtAddr);
+          break;
+        default:
+          break;
         }
-
-      NS_LOG_DEBUG ("Packet from " << params.m_srcAddr << " to " << params.m_dstAddr);
 
       if (m_macPromiscuousMode)
         {

@@ -115,6 +115,20 @@ QueueDiscItem::SetTxQueueIndex (uint8_t txq)
   m_txq = txq;
 }
 
+Time
+QueueDiscItem::GetTimeStamp (void) const
+{
+  NS_LOG_FUNCTION (this);
+  return m_tstamp;
+}
+
+void
+QueueDiscItem::SetTimeStamp (Time t)
+{
+  NS_LOG_FUNCTION (this << t);
+  m_tstamp = t;
+}
+
 void
 QueueDiscItem::Print (std::ostream& os) const
 {
@@ -123,6 +137,13 @@ QueueDiscItem::Print (std::ostream& os) const
      << "proto " << (uint16_t) m_protocol << " "
      << "txq " << (uint8_t) m_txq
   ;
+}
+
+uint32_t
+QueueDiscItem::Hash (uint32_t perturbation) const
+{
+  NS_LOG_WARN ("The Hash method should be redefined by subclasses");
+  return 0;
 }
 
 } // namespace ns3

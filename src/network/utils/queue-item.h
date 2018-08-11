@@ -23,6 +23,7 @@
 #include "ns3/ptr.h"
 #include "ns3/simple-ref-count.h"
 #include <ns3/address.h>
+#include "ns3/nstime.h"
 
 namespace ns3 {
 
@@ -181,6 +182,18 @@ public:
   void SetTxQueueIndex (uint8_t txq);
 
   /**
+   * \brief Get the timestamp included in this item
+   * \return the timestamp included in this item.
+   */
+  Time GetTimeStamp (void) const;
+
+  /**
+   * \brief Set the timestamp included in this item
+   * \param t the timestamp to include in this item.
+   */
+  void SetTimeStamp (Time t);
+
+  /**
    * \brief Add the header to the packet
    *
    * Subclasses may keep header and payload separate to allow manipulating the header,
@@ -201,6 +214,17 @@ public:
    * \return true if the packet gets marked, false otherwise
    */
   virtual bool Mark (void) = 0;
+
+  /**
+   * \brief Computes the hash of various fields of the packet header
+   *
+   * This method just returns 0. Subclasses should implement a reasonable hash
+   * for their protocol type, such as hashing on the TCP/IP 5-tuple.
+   *
+   * \param perturbation hash perturbation value
+   * \return the hash of various fields of the packet header
+   */
+  virtual uint32_t Hash (uint32_t perturbation = 0) const;
 
 private:
   /**
@@ -226,6 +250,7 @@ private:
   Address m_address;      //!< MAC destination address
   uint16_t m_protocol;    //!< L3 Protocol number
   uint8_t m_txq;          //!< Transmission queue index
+  Time m_tstamp;          //!< timestamp when the packet was enqueued
 };
 
 } // namespace ns3

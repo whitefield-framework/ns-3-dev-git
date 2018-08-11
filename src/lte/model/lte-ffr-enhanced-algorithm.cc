@@ -34,7 +34,7 @@ NS_LOG_COMPONENT_DEFINE ("LteFfrEnhancedAlgorithm");
 
 NS_OBJECT_ENSURE_REGISTERED (LteFfrEnhancedAlgorithm);
 
-/// Spectral efficency for CQI table
+/// Spectral efficiency for CQI table
 static const double SpectralEfficiencyForCqi[16] = {
   0.0, // out of range
   0.15, 0.23, 0.38, 0.6, 0.88, 1.18,
@@ -88,9 +88,9 @@ static const struct FfrEnhancedUplinkDefaultConfiguration
   { 3, 100, 64, 16, 16}
 }; ///< the enhanced uplink default configuration
 
-/// number of downlink configurations
+/** \returns number of downlink configurations */
 const uint16_t NUM_DOWNLINK_CONFS (sizeof (g_ffrEnhancedDownlinkDefaultConfiguration) / sizeof (FfrEnhancedDownlinkDefaultConfiguration));
-/// number of uplink configurations
+/** \returns number of uplink configurations */
 const uint16_t NUM_UPLINK_CONFS (sizeof (g_ffrEnhancedUplinkDefaultConfiguration) / sizeof (FfrEnhancedUplinkDefaultConfiguration));
 
 

@@ -342,7 +342,7 @@ LteEnbMac::GetTypeId (void)
     .AddConstructor<LteEnbMac> ()
     .AddAttribute ("NumberOfRaPreambles",
                    "how many random access preambles are available for the contention based RACH process",
-                   UintegerValue (50),
+                   UintegerValue (52),
                    MakeUintegerAccessor (&LteEnbMac::m_numberOfRaPreambles),
                    MakeUintegerChecker<uint8_t> (4, 64))
     .AddAttribute ("PreambleTransMax",
@@ -585,7 +585,6 @@ LteEnbMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
 
   // --- UPLINK ---
   // Send UL-CQI info to the scheduler
-  std::vector <FfMacSchedSapProvider::SchedUlCqiInfoReqParameters>::iterator itCqi;
   for (uint16_t i = 0; i < m_ulCqiReceived.size (); i++)
     {
       if (subframeNo > 1)
@@ -809,7 +808,7 @@ LteEnbMac::DoAddUe (uint16_t rnti)
 
   m_cschedSapProvider->CschedUeConfigReq (params);
 
-  // Create DL trasmission HARQ buffers
+  // Create DL transmission HARQ buffers
   std::vector < Ptr<PacketBurst> > dlHarqLayer0pkt;
   dlHarqLayer0pkt.resize (8);
   for (uint8_t i = 0; i < 8; i++)

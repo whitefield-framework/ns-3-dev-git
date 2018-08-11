@@ -34,20 +34,18 @@
  *   gnuplot 80211b.plt
  */
 
-#include "math.h"
-#include "stdlib.h"
-#include "stdio.h"
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_integration.h>
 #include <gsl/gsl_cdf.h>
 #include <gsl/gsl_sf_bessel.h>
+
 #define min(a,b) ((a) < (b) ? (a) : (b))
 #define max(a,b) ((a) > (b) ? (a) : (b))
 #define WLAN_SIR_perfect 10.0 // if SIR > 10dB, perfect reception
 #define WLAN_SIR_impossible 0.1 // if SIR < -10dB, impossible to receive
 
 /**
- * \ingroup wifi-test
+ * \ingroup wifi
  * \defgroup wifi-test wifi module tests
  */
 

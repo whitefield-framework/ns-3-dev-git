@@ -609,7 +609,7 @@ LteUeMac::DoReceiveLteControlMessage (Ptr<LteControlMessage> msg)
       UlDciListElement_s dci = msg2->GetDci ();
       if (dci.m_ndi == 1)
         {
-          // New transmission -> emtpy pkt buffer queue (for deleting eventual pkts not acked )
+          // New transmission -> empty pkt buffer queue (for deleting eventual pkts not acked )
           Ptr<PacketBurst> pb = CreateObject <PacketBurst> ();
           m_miUlHarqProcessesPacket.at (m_harqProcessId) = pb;
           // Retrieve data from RLC
@@ -826,8 +826,9 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
       SendReportBufferStatus ();
       m_bsrLast = Simulator::Now ();
       m_freshUlBsr = false;
-      m_harqProcessId = (m_harqProcessId + 1) % HARQ_PERIOD;
     }
+  m_harqProcessId = (m_harqProcessId + 1) % HARQ_PERIOD;
+
 }
 
 int64_t

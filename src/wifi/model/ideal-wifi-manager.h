@@ -52,13 +52,11 @@ public:
   IdealWifiManager ();
   virtual ~IdealWifiManager ();
 
-  void SetupPhy (Ptr<WifiPhy> phy);
-
-  void SetHeSupported (bool enable); //HE rates not yet supported
+  void SetupPhy (const Ptr<WifiPhy> phy);
 
 
 private:
-  //overriden from base class
+  //overridden from base class
   void DoInitialize (void);
   WifiRemoteStation* DoCreateStation (void) const;
   void DoReportRxOk (WifiRemoteStation *station,
@@ -98,10 +96,10 @@ private:
 
   /**
    * Convenience function for selecting a channel width for legacy mode
-   * \param mode non-(V)HT WifiMode
+   * \param mode legacy WifiMode
    * \return the channel width (MHz) for the selected mode
    */
-  uint8_t GetChannelWidthForMode (WifiMode mode) const;
+  uint16_t GetChannelWidthForMode (WifiMode mode) const;
 
   /**
    * A vector of <snr, WifiTxVector> pair holding the minimum SNR for the
