@@ -24,7 +24,6 @@
  */
 #include "lr-wpan-mac.h"
 #include "lr-wpan-csmaca.h"
-#include "lr-wpan-mac-header.h"
 #include "lr-wpan-mac-trailer.h"
 #include <ns3/simulator.h>
 #include <ns3/log.h>
@@ -276,11 +275,7 @@ LrWpanMac::McpsDataRequest (McpsDataRequestParams params, Ptr<Packet> p)
           // The frame could still be too large once headers are put on
           // in which case the phy will reject it instead
           NS_LOG_ERROR (this << " packet too big: " << p->GetSize ());
-          confirmParams.m_status = IEEE_802_15_4_FRAME_TOO_LONG;
-          if (!m_mcpsDataConfirmCallback.IsNull ())
-            {
-              m_mcpsDataConfirmCallback (confirmParams);
-            }
+          CallDataConfirmCallback(IEEE_802_15_4_FRAME_TOO_LONG, macHdr, p->GetSize());
           return;
         }
 
@@ -288,11 +283,7 @@ LrWpanMac::McpsDataRequest (McpsDataRequestParams params, Ptr<Packet> p)
           && (params.m_dstAddrMode == NO_PANID_ADDR))
         {
           NS_LOG_ERROR (this << " Can not send packet with no Address field" );
-          confirmParams.m_status = IEEE_802_15_4_INVALID_ADDRESS;
-          if (!m_mcpsDataConfirmCallback.IsNull ())
-            {
-              m_mcpsDataConfirmCallback (confirmParams);
-            }
+          CallDataConfirmCallback(IEEE_802_15_4_INVALID_ADDRESS, macHdr, p->GetSize());
           return;
         }
       switch (params.m_srcAddrMode)
@@ -314,11 +305,7 @@ LrWpanMac::McpsDataRequest (McpsDataRequestParams params, Ptr<Packet> p)
           break;
         default:
           NS_LOG_ERROR (this << " Can not send packet with incorrect Source Address mode = " << params.m_srcAddrMode);
-          confirmParams.m_status = IEEE_802_15_4_INVALID_ADDRESS;
-          if (!m_mcpsDataConfirmCallback.IsNull ())
-            {
-              m_mcpsDataConfirmCallback (confirmParams);
-            }
+          CallDataConfirmCallback(IEEE_802_15_4_INVALID_ADDRESS, macHdr, p->GetSize());
           return;
         }
       switch (params.m_dstAddrMode)
@@ -340,11 +327,7 @@ LrWpanMac::McpsDataRequest (McpsDataRequestParams params, Ptr<Packet> p)
           break;
         default:
           NS_LOG_ERROR (this << " Can not send packet with incorrect Destination Address mode = " << params.m_dstAddrMode);
-          confirmParams.m_status = IEEE_802_15_4_INVALID_ADDRESS;
-          if (!m_mcpsDataConfirmCallback.IsNull ())
-            {
-              m_mcpsDataConfirmCallback (confirmParams);
-            }
+          CallDataConfirmCallback(IEEE_802_15_4_INVALID_ADDRESS, macHdr, p->GetSize());
           return;
         }
 
@@ -367,12 +350,8 @@ LrWpanMac::McpsDataRequest (McpsDataRequestParams params, Ptr<Packet> p)
         }
       else
         {
-          confirmParams.m_status = IEEE_802_15_4_INVALID_PARAMETER;
           NS_LOG_ERROR (this << "Incorrect TxOptions bit 0 not 0/1");
-          if (!m_mcpsDataConfirmCallback.IsNull ())
-            {
-              m_mcpsDataConfirmCallback (confirmParams);
-            }
+          CallDataConfirmCallback(IEEE_802_15_4_INVALID_PARAMETER, macHdr, p->GetSize());
           return;
         }
 
@@ -390,11 +369,7 @@ LrWpanMac::McpsDataRequest (McpsDataRequestParams params, Ptr<Packet> p)
           else
             {
               NS_LOG_ERROR (this << "Incorrect TxOptions bit 1 not 0/1");
-              confirmParams.m_status = IEEE_802_15_4_INVALID_PARAMETER;
-              if (!m_mcpsDataConfirmCallback.IsNull ())
-                {
-                  m_mcpsDataConfirmCallback (confirmParams);
-                }
+              CallDataConfirmCallback(IEEE_802_15_4_INVALID_PARAMETER, macHdr, p->GetSize());
               return;
             }
         }
@@ -403,11 +378,7 @@ LrWpanMac::McpsDataRequest (McpsDataRequestParams params, Ptr<Packet> p)
           if (b1 != 0)
             {
               NS_LOG_ERROR (this << "for non-beacon-enables PAN, bit 1 should always be set to 0");
-              confirmParams.m_status = IEEE_802_15_4_INVALID_PARAMETER;
-              if (!m_mcpsDataConfirmCallback.IsNull ())
-                {
-                  m_mcpsDataConfirmCallback (confirmParams);
-                }
+              CallDataConfirmCallback(IEEE_802_15_4_INVALID_PARAMETER, macHdr, p->GetSize());
               return;
             }
         }
@@ -423,11 +394,7 @@ LrWpanMac::McpsDataRequest (McpsDataRequestParams params, Ptr<Packet> p)
       else
         {
           NS_LOG_ERROR (this << "Incorrect TxOptions bit 2 not 0/1");
-          confirmParams.m_status = IEEE_802_15_4_INVALID_PARAMETER;
-          if (!m_mcpsDataConfirmCallback.IsNull ())
-            {
-              m_mcpsDataConfirmCallback (confirmParams);
-            }
+          CallDataConfirmCallback(IEEE_802_15_4_INVALID_PARAMETER, macHdr, p->GetSize());
           return;
         }
 
@@ -702,15 +669,7 @@ LrWpanMac::PdDataIndication (uint32_t psduLength, Ptr<Packet> p, uint8_t lqi)
                       // If it is an ACK with the expected sequence number, finish the transmission
                       // and notify the upper layer.
                       m_ackWaitTimeout.Cancel ();
-                      if (!m_mcpsDataConfirmCallback.IsNull ())
-                        {
-                          TxQueueElement *txQElement = m_txQueue.front ();
-                          McpsDataConfirmParams confirmParams;
-                          confirmParams.m_msduHandle = txQElement->txQMsduHandle;
-                          confirmParams.m_retries = m_retransmission;
-                          confirmParams.m_status = IEEE_802_15_4_SUCCESS;
-                          m_mcpsDataConfirmCallback (confirmParams);
-                        }
+                      CallDataConfirmCallback(IEEE_802_15_4_SUCCESS);
                       RemoveFirstTxQElement ();
                       m_setMacState.Cancel ();
                       m_setMacState = Simulator::ScheduleNow (&LrWpanMac::SetLrWpanMacState, this, MAC_IDLE);
@@ -822,13 +781,7 @@ LrWpanMac::PrepareRetransmission (void)
       // remove the copy of the packet that was just sent
       TxQueueElement *txQElement = m_txQueue.front ();
       m_macTxDropTrace (txQElement->txQPkt);
-      if (!m_mcpsDataConfirmCallback.IsNull ())
-        {
-          McpsDataConfirmParams confirmParams;
-          confirmParams.m_msduHandle = txQElement->txQMsduHandle;
-          confirmParams.m_status = IEEE_802_15_4_NO_ACK;
-          m_mcpsDataConfirmCallback (confirmParams);
-        }
+      CallDataConfirmCallback(IEEE_802_15_4_NO_ACK);
       RemoveFirstTxQElement ();
       return false;
     }
@@ -839,6 +792,45 @@ LrWpanMac::PrepareRetransmission (void)
       // Start next CCA process for this packet.
       return true;
     }
+}
+
+void LrWpanMac::CallDataConfirmCallback(LrWpanMcpsDataConfirmStatus status,
+        LrWpanMacHeader macHdr, uint32_t pktSize)
+{
+  McpsDataConfirmParams confirmParams;
+
+  if (m_mcpsDataConfirmCallback.IsNull ()) {
+      return;
+  }
+
+  TxQueueElement *txQElement = m_txQueue.front ();
+  if(txQElement) {
+      confirmParams.m_msduHandle = txQElement->txQMsduHandle;
+  }
+
+  // Get the Dst address
+  confirmParams.m_dstAddrMode = macHdr.GetDstAddrMode();
+  if(confirmParams.m_dstAddrMode == LrWpanMacHeader::SHORTADDR) {
+      confirmParams.m_addrShortDstAddr = macHdr.GetShortDstAddr();
+  } else {
+      confirmParams.m_addrExtDstAddr = macHdr.GetExtDstAddr();
+  }
+
+  confirmParams.m_retries = m_retransmission;
+  confirmParams.m_pktSz = pktSize;
+  confirmParams.m_status = status;
+  m_mcpsDataConfirmCallback (confirmParams);
+}
+
+void LrWpanMac::CallDataConfirmCallback(LrWpanMcpsDataConfirmStatus status)
+{
+  LrWpanMacHeader macHdr;
+  if(m_txPkt == 0)
+    {
+      return;
+    }
+  m_txPkt->PeekHeader (macHdr);
+  CallDataConfirmCallback(status, macHdr, m_txPkt->GetSize());
 }
 
 void
@@ -871,16 +863,7 @@ LrWpanMac::PdDataConfirm (LrWpanPhyEnumeration status)
             {
               m_macTxOkTrace (m_txPkt);
               // remove the copy of the packet that was just sent
-              if (!m_mcpsDataConfirmCallback.IsNull ())
-                {
-                  McpsDataConfirmParams confirmParams;
-                  NS_ASSERT_MSG (m_txQueue.size () > 0, "TxQsize = 0");
-                  TxQueueElement *txQElement = m_txQueue.front ();
-                  confirmParams.m_msduHandle = txQElement->txQMsduHandle;
-				  confirmParams.m_retries = m_retransmission;
-                  confirmParams.m_status = IEEE_802_15_4_SUCCESS;
-                  m_mcpsDataConfirmCallback (confirmParams);
-                }
+              CallDataConfirmCallback(IEEE_802_15_4_SUCCESS);
               RemoveFirstTxQElement ();
             }
         }
@@ -898,13 +881,7 @@ LrWpanMac::PdDataConfirm (LrWpanPhyEnumeration status)
           NS_ASSERT_MSG (m_txQueue.size () > 0, "TxQsize = 0");
           TxQueueElement *txQElement = m_txQueue.front ();
           m_macTxDropTrace (txQElement->txQPkt);
-          if (!m_mcpsDataConfirmCallback.IsNull ())
-            {
-              McpsDataConfirmParams confirmParams;
-              confirmParams.m_msduHandle = txQElement->txQMsduHandle;
-              confirmParams.m_status = IEEE_802_15_4_FRAME_TOO_LONG;
-              m_mcpsDataConfirmCallback (confirmParams);
-            }
+          CallDataConfirmCallback(IEEE_802_15_4_FRAME_TOO_LONG);
           RemoveFirstTxQElement ();
         }
       else
@@ -1037,13 +1014,8 @@ LrWpanMac::SetLrWpanMacState (LrWpanMacState macState)
 
       // cannot find a clear channel, drop the current packet.
       NS_LOG_DEBUG ( this << " cannot find clear channel");
-      confirmParams.m_msduHandle = m_txQueue.front ()->txQMsduHandle;
-      confirmParams.m_status = IEEE_802_15_4_CHANNEL_ACCESS_FAILURE;
+      CallDataConfirmCallback(IEEE_802_15_4_CHANNEL_ACCESS_FAILURE);
       m_macTxDropTrace (m_txPkt);
-      if (!m_mcpsDataConfirmCallback.IsNull ())
-        {
-          m_mcpsDataConfirmCallback (confirmParams);
-        }
       // remove the copy of the packet that was just sent
       RemoveFirstTxQElement ();
 

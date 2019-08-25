@@ -31,6 +31,7 @@
 #include <ns3/mac64-address.h>
 #include <ns3/sequence-number.h>
 #include <ns3/lr-wpan-phy.h>
+#include "lr-wpan-mac-header.h"
 #include <ns3/event-id.h>
 #include <deque>
 
@@ -172,6 +173,10 @@ struct McpsDataConfirmParams
 {
   uint8_t m_msduHandle; //!< MSDU handle
   uint8_t m_retries; //!< number of retries before getting ACK_SUCCESS
+  uint8_t m_dstAddrMode; //!< Dst Address type is short/ext
+  uint32_t m_pktSz; //!< Packet size for which DataConfirm is received
+  Mac16Address m_addrShortDstAddr;      //!< Dst Short addr (0 or 2 Octets)
+  Mac64Address m_addrExtDstAddr;        //!< Dst Ext addr (0 or 8 Octets)
   LrWpanMcpsDataConfirmStatus m_status; //!< The status of the last MSDU transmission
 };
 
@@ -583,6 +588,9 @@ private:
     uint8_t txQMsduHandle; //!< MSDU Handle
     Ptr<Packet> txQPkt;    //!< Queued packet
   };
+
+  void CallDataConfirmCallback(LrWpanMcpsDataConfirmStatus status, LrWpanMacHeader macHdr, uint32_t pktSize);
+  void CallDataConfirmCallback(LrWpanMcpsDataConfirmStatus status);
 
   /**
    * Send an acknowledgment packet for the given sequence number.
