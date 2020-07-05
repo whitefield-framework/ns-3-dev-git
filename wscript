@@ -339,6 +339,7 @@ def print_config(env, phase='configure'):
 
 def configure(conf):
     conf.load('relocation', tooldir=['waf-tools'])
+    conf.env.append_value('INCLUDES', ['/usr/include/boost'])
 
     # attach some extra methods
     conf.check_nonfatal = types.MethodType(_check_nonfatal, conf)
